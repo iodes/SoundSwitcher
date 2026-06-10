@@ -5,6 +5,8 @@ using System.Windows.Controls;
 using Hardcodet.Wpf.TaskbarNotification;
 using SoundSwitcher.Services;
 using SoundSwitcher.ViewModels;
+using SoundSwitcher.Controls;
+using SoundSwitcher.Helpers;
 using MenuItem = Wpf.Ui.Controls.MenuItem;
 using SymbolIcon = Wpf.Ui.Controls.SymbolIcon;
 using SymbolRegular = Wpf.Ui.Controls.SymbolRegular;
@@ -21,6 +23,7 @@ public partial class App
     #region Fields
     private MainWindow _mainWindow = null!;
     private TaskbarIcon _taskbarIcon = null!;
+    private ProfileChangeNotification? _currentNotification;
     #endregion
 
     #region Static Services
@@ -89,7 +92,8 @@ public partial class App
         };
 
         // Left-click: switch to next preferred device
-        _taskbarIcon.TrayLeftMouseUp += OnTrayLeftClick;
+        _taskbarIcon.TrayLeftMouseDown += OnTrayLeftClick;
+        _taskbarIcon.TrayMouseDoubleClick += OnTrayLeftClick;
 
         // Context menu
         var menuSettings = CreateMenuItem("설정", ShowWithActivate, SymbolRegular.Settings24);
@@ -123,10 +127,34 @@ public partial class App
             if (!string.IsNullOrEmpty(cName)) msg += $"🎤 {cName}";
         }
 
-        _taskbarIcon.ShowBalloonTip(
-            "장치 전환됨",
-            msg.TrimEnd(),
-            BalloonIcon.Info);
+        if (_currentNotification != null && !_currentNotification.IsClosed)
+        {
+            // If an existing popup is open, update its content only (extend timer without resetting animation)
+            _currentNotification.UpdateMessage(msg.TrimEnd());
+        }
+        else
+        {
+            _taskbarIcon.CloseBalloon();
+            
+            _currentNotification = new ProfileChangeNotification(msg.TrimEnd(), () => 
+            {
+                _taskbarIcon.CloseBalloon();
+                _currentNotification = null;
+            });
+
+            // Apply margins based on Taskbar position to mimic native Windows 11 notification placement
+            var tbPos = TaskbarHelper.GetTaskbarPosition();
+            if (tbPos == TaskbarPosition.Top) 
+                _currentNotification.Margin = new Thickness(0, 10, 10, 0);
+            else if (tbPos == TaskbarPosition.Left) 
+                _currentNotification.Margin = new Thickness(10, 0, 0, 10);
+            else if (tbPos == TaskbarPosition.Right) 
+                _currentNotification.Margin = new Thickness(0, 0, 10, 10);
+            else // Bottom or Unknown
+                _currentNotification.Margin = new Thickness(0, 0, 10, 10);
+
+            _taskbarIcon.ShowCustomBalloon(_currentNotification, System.Windows.Controls.Primitives.PopupAnimation.None, null);
+        }
     }
 
     private void UpdateTrayIcon()
