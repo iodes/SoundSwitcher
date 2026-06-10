@@ -21,30 +21,6 @@ public partial class ProfileChangeNotification : UserControl
     private const int GWL_EXSTYLE = -20;
     private const int WS_EX_TRANSPARENT = 0x00000020;
     private const int WS_EX_LAYERED = 0x00080000;
-
-    [DllImport("user32.dll", EntryPoint = "GetWindowLong")]
-    private static extern int GetWindowLong32(IntPtr hWnd, int nIndex);
-
-    [DllImport("user32.dll", EntryPoint = "GetWindowLongPtr")]
-    private static extern IntPtr GetWindowLongPtr64(IntPtr hWnd, int nIndex);
-
-    private static int GetWindowLong(IntPtr hWnd, int nIndex)
-    {
-        if (IntPtr.Size == 8) return (int)GetWindowLongPtr64(hWnd, nIndex);
-        else return GetWindowLong32(hWnd, nIndex);
-    }
-
-    [DllImport("user32.dll", EntryPoint = "SetWindowLong")]
-    private static extern int SetWindowLong32(IntPtr hWnd, int nIndex, int dwNewLong);
-
-    [DllImport("user32.dll", EntryPoint = "SetWindowLongPtr")]
-    private static extern IntPtr SetWindowLongPtr64(IntPtr hWnd, int nIndex, IntPtr dwNewLong);
-
-    private static int SetWindowLong(IntPtr hWnd, int nIndex, int dwNewLong)
-    {
-        if (IntPtr.Size == 8) return (int)SetWindowLongPtr64(hWnd, nIndex, new IntPtr(dwNewLong));
-        else return SetWindowLong32(hWnd, nIndex, dwNewLong);
-    }
     #endregion
 
     public ProfileChangeNotification(string message, Action onCloseAction)
@@ -64,9 +40,9 @@ public partial class ProfileChangeNotification : UserControl
             var hwndSource = PresentationSource.FromVisual(this) as HwndSource;
             if (hwndSource != null)
             {
-                var hwnd = hwndSource.Handle;
-                int exStyle = GetWindowLong(hwnd, GWL_EXSTYLE);
-                SetWindowLong(hwnd, GWL_EXSTYLE, exStyle | WS_EX_TRANSPARENT | WS_EX_LAYERED);
+                var hwnd = new Windows.Win32.Foundation.HWND(hwndSource.Handle);
+                int exStyle = Windows.Win32.PInvoke.GetWindowLong(hwnd, Windows.Win32.UI.WindowsAndMessaging.WINDOW_LONG_PTR_INDEX.GWL_EXSTYLE);
+                Windows.Win32.PInvoke.SetWindowLong(hwnd, Windows.Win32.UI.WindowsAndMessaging.WINDOW_LONG_PTR_INDEX.GWL_EXSTYLE, exStyle | WS_EX_TRANSPARENT | WS_EX_LAYERED);
             }
         }), DispatcherPriority.Loaded);
 

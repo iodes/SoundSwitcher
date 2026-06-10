@@ -10,17 +10,7 @@ namespace SoundSwitcher.Helpers;
 
 public static class NativeIconHelper
 {
-    [DllImport("shell32.dll", CharSet = CharSet.Auto)]
-    private static extern int SHDefExtractIcon(
-        string pszIconFile,
-        int iIndex,
-        uint uFlags,
-        ref IntPtr phiconLarge,
-        ref IntPtr phiconSmall,
-        uint nIconSize);
 
-    [DllImport("user32.dll", SetLastError = true)]
-    private static extern bool DestroyIcon(IntPtr hIcon);
 
     /// <summary>
     /// Parses a string like "@%windir%\system32\mmres.dll,-3012" and extracts the icon as an ImageSource.
@@ -50,33 +40,33 @@ public static class NativeIconHelper
             if (!int.TryParse(indexStr, out int iconIndex))
                 return null;
 
-            IntPtr hIconLarge = IntPtr.Zero;
-            IntPtr hIconSmall = IntPtr.Zero;
+            Windows.Win32.DestroyIconSafeHandle hIconLarge;
+            Windows.Win32.DestroyIconSafeHandle hIconSmall;
 
             // nIconSize combines width (LOWORD) and height (HIWORD)
             // 32 for large icon, 16 for small icon
             uint nIconSize = (16u << 16) | 32u;
             
-            int hresult = SHDefExtractIcon(filePath, iconIndex, 0, ref hIconLarge, ref hIconSmall, nIconSize);
+            int hresult = Windows.Win32.PInvoke.SHDefExtractIcon(filePath, iconIndex, 0, out hIconLarge, out hIconSmall, nIconSize);
             
             if (hresult != 0)
                 return null;
 
             ImageSource? resultSource = null;
-            if (hIconLarge != IntPtr.Zero)
+            if (hIconLarge != null && !hIconLarge.IsInvalid)
             {
                 resultSource = Imaging.CreateBitmapSourceFromHIcon(
-                    hIconLarge,
+                    hIconLarge.DangerousGetHandle(),
                     Int32Rect.Empty,
                     BitmapSizeOptions.FromEmptyOptions());
                 
                 resultSource.Freeze(); // Make it cross-thread accessible
-                DestroyIcon(hIconLarge);
+                hIconLarge.Dispose();
             }
 
-            if (hIconSmall != IntPtr.Zero)
+            if (hIconSmall != null && !hIconSmall.IsInvalid)
             {
-                DestroyIcon(hIconSmall);
+                hIconSmall.Dispose();
             }
 
             return resultSource;
