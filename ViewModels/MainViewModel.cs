@@ -248,6 +248,18 @@ public class MainViewModel : ViewModelBase
     private void OnProfileApplyRequested(DeviceProfileViewModel pvm)
     {
         var model = pvm.GetModel();
+
+        var currentPlayback = _audioService.GetDefaultDevice(NAudio.CoreAudioApi.DataFlow.Render)?.ID;
+        var currentCapture = _audioService.GetDefaultDevice(NAudio.CoreAudioApi.DataFlow.Capture)?.ID;
+
+        bool needsSwitch = false;
+        if (model.PlaybackDeviceId != null && model.PlaybackDeviceId != currentPlayback)
+            needsSwitch = true;
+        if (model.CaptureDeviceId != null && model.CaptureDeviceId != currentCapture)
+            needsSwitch = true;
+
+        if (!needsSwitch) return;
+
         _switchingService.SwitchToProfile(model);
         App.NotifyProfileChanged(model);
     }

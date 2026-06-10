@@ -23,6 +23,7 @@ public partial class App
     #region Fields
     private MainWindow _mainWindow = null!;
     private TaskbarIcon _taskbarIcon = null!;
+    private ContextMenu _trayContextMenu = null!;
     private ProfileChangeNotification? _currentNotification;
     #endregion
 
@@ -111,7 +112,6 @@ public partial class App
         _taskbarIcon = new TaskbarIcon
         {
             IsEnabled = true,
-            ContextMenu = new ContextMenu(),
             Icon = GetAppIcon(),
             ToolTipText = "SoundSwitcher"
         };
@@ -121,20 +121,47 @@ public partial class App
         _taskbarIcon.TrayMouseDoubleClick += OnTrayPrimaryAction;
 
         // Context menu
+        _trayContextMenu = new ContextMenu();
         var menuSettings = CreateMenuItem("프로그램 설정", ShowWithActivate, SymbolRegular.Settings24);
         var menuSystemSoundSettings = CreateMenuItem("시스템 소리 설정", OpenSystemSoundSettings, SymbolRegular.Speaker224);
         var menuExit = CreateMenuItem("종료", () => Current.Shutdown(), SymbolRegular.ArrowExit20);
 
-        _taskbarIcon.ContextMenu.Items.Add(menuSettings);
-        _taskbarIcon.ContextMenu.Items.Add(menuSystemSoundSettings);
-        _taskbarIcon.ContextMenu.Items.Add(new Separator());
-        _taskbarIcon.ContextMenu.Items.Add(menuExit);
+        _trayContextMenu.Items.Add(menuSettings);
+        _trayContextMenu.Items.Add(menuSystemSoundSettings);
+        _trayContextMenu.Items.Add(new Separator());
+        _trayContextMenu.Items.Add(menuExit);
+
+        _taskbarIcon.TrayRightMouseUp += OnTrayRightMouseUp;
 
         UpdateTrayIcon();
     }
     #endregion
 
     #region Tray Icon
+    private void OnTrayRightMouseUp(object sender, RoutedEventArgs e)
+    {
+        NativeMethods.GetCursorPos(out var point);
+
+        if (_mainWindow != null)
+        {
+            var helper = new System.Windows.Interop.WindowInteropHelper(_mainWindow);
+            NativeMethods.SetForegroundWindow(helper.EnsureHandle());
+        }
+
+        double dpiX = 1.0;
+        double dpiY = 1.0;
+        using (var graphics = System.Drawing.Graphics.FromHwnd(IntPtr.Zero))
+        {
+            dpiX = graphics.DpiX / 96.0;
+            dpiY = graphics.DpiY / 96.0;
+        }
+
+        _trayContextMenu.Placement = System.Windows.Controls.Primitives.PlacementMode.AbsolutePoint;
+        _trayContextMenu.HorizontalOffset = point.X / dpiX;
+        _trayContextMenu.VerticalOffset = point.Y / dpiY;
+        _trayContextMenu.IsOpen = true;
+    }
+
     private void OnTrayPrimaryAction(object sender, RoutedEventArgs e)
     {
         var profileCount = ViewModel.Profiles.Count;
