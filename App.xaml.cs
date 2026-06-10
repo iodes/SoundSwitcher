@@ -88,6 +88,22 @@ public partial class App
         _mainWindow?.ShowAndActivate();
     }
 
+    private void OpenSystemSoundSettings()
+    {
+        try
+        {
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = "mmsys.cpl",
+                UseShellExecute = true
+            });
+        }
+        catch
+        {
+            // Ignore if it fails to launch
+        }
+    }
+
     private void InitializeUserInterface()
     {
         _mainWindow = new MainWindow { DataContext = ViewModel };
@@ -105,10 +121,12 @@ public partial class App
         _taskbarIcon.TrayMouseDoubleClick += OnTrayPrimaryAction;
 
         // Context menu
-        var menuSettings = CreateMenuItem("설정", ShowWithActivate, SymbolRegular.Settings24);
+        var menuSettings = CreateMenuItem("프로그램 설정", ShowWithActivate, SymbolRegular.Settings24);
+        var menuSystemSoundSettings = CreateMenuItem("시스템 소리 설정", OpenSystemSoundSettings, SymbolRegular.Speaker224);
         var menuExit = CreateMenuItem("종료", () => Current.Shutdown(), SymbolRegular.ArrowExit20);
 
         _taskbarIcon.ContextMenu.Items.Add(menuSettings);
+        _taskbarIcon.ContextMenu.Items.Add(menuSystemSoundSettings);
         _taskbarIcon.ContextMenu.Items.Add(new Separator());
         _taskbarIcon.ContextMenu.Items.Add(menuExit);
 
@@ -224,11 +242,20 @@ public partial class App
         }
 
         // Try loading user-configured custom icon
-        if (activeProfile.IconPath != null && File.Exists(activeProfile.IconPath))
+        string? fullIconPath = IconCacheService.GetIconFullPath(activeProfile.IconPath);
+
+        if (fullIconPath != null)
         {
             try
             {
-                _taskbarIcon.IconSource = new System.Windows.Media.Imaging.BitmapImage(new Uri(activeProfile.IconPath));
+                var bitmap = new System.Windows.Media.Imaging.BitmapImage();
+                bitmap.BeginInit();
+                bitmap.CacheOption = System.Windows.Media.Imaging.BitmapCacheOption.OnLoad;
+                bitmap.UriSource = new Uri(fullIconPath);
+                bitmap.EndInit();
+                bitmap.Freeze();
+
+                _taskbarIcon.IconSource = bitmap;
                 return;
             }
             catch

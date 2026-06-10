@@ -25,19 +25,33 @@ public static class IconCacheService
 
         File.Copy(sourceFilePath, destFilePath, true);
 
-        return destFilePath;
+        return fileName;
     }
 
-    public static void DeleteIcon(string? cachedFilePath)
+    public static string? GetIconFullPath(string? fileName)
     {
-        if (string.IsNullOrEmpty(cachedFilePath))
+        if (string.IsNullOrWhiteSpace(fileName))
+            return null;
+
+        string safeFileName = Path.GetFileName(fileName);
+        string fullPath = Path.Combine(IconsFolder, safeFileName);
+
+        return File.Exists(fullPath) ? fullPath : null;
+    }
+
+    public static void DeleteIcon(string? fileName)
+    {
+        if (string.IsNullOrWhiteSpace(fileName))
             return;
+
+        string safeFileName = Path.GetFileName(fileName);
+        string fullPath = Path.Combine(IconsFolder, safeFileName);
 
         try
         {
-            if (File.Exists(cachedFilePath))
+            if (File.Exists(fullPath))
             {
-                File.Delete(cachedFilePath);
+                File.Delete(fullPath);
             }
         }
         catch

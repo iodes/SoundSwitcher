@@ -24,154 +24,187 @@
         <ItemsControl ItemsSource="{Binding Profiles}" x:Name="ProfileItemsControl">
             <ItemsControl.ItemTemplate>
                 <DataTemplate DataType="{x:Type vm:DeviceProfileViewModel}">
-                    <Border Margin="0,0,0,8" Padding="12" 
-                            BorderThickness="1" 
-                            CornerRadius="4"
-                            RenderTransformOrigin="0.5,0.5"
-                            Loaded="ProfileBorder_Loaded"
-                            MouseLeftButtonUp="ProfileBorder_MouseLeftButtonUp"
+                    <Button Command="{Binding ApplyCommand}"
+                            Margin="0,0,0,8"
+                            Padding="0"
+                            Background="{DynamicResource ControlFillColorDefaultBrush}"
+                            BorderThickness="0"
+                            HorizontalContentAlignment="Stretch"
+                            VerticalContentAlignment="Stretch"
+                            behaviors:AnimatedPressBehavior.IsEnabled="True"
+                            behaviors:AnimatedPressBehavior.HoverBackground="{DynamicResource ControlFillColorSecondaryBrush}"
                             ContextMenuOpening="ProfileBorder_ContextMenuOpening"
                             ContextMenuClosing="ProfileBorder_ContextMenuClosing">
-                        <Border.ContextMenu>
+                        <Button.ContextMenu>
                             <ContextMenu>
+                                <MenuItem Header="아이콘 변경" Command="{Binding ChangeIconCommand}" />
                                 <MenuItem Header="기본 아이콘으로 초기화" Command="{Binding ResetIconCommand}" 
-                                          Visibility="{Binding IconPath, Converter={StaticResource NotNullToVis}}" />
+                                          Visibility="{Binding IconImage, Converter={StaticResource NotNullToVis}}" />
                                 <MenuItem Header="삭제" Command="{Binding DeleteCommand}" />
                             </ContextMenu>
-                        </Border.ContextMenu>
-                        <Border.Resources>
-                            <Storyboard x:Key="LoadStoryboard" FillBehavior="Stop">
-                                <DoubleAnimation Storyboard.TargetProperty="Opacity" From="0" To="1" Duration="0:0:0.35">
-                                    <DoubleAnimation.EasingFunction>
-                                        <CubicEase EasingMode="EaseOut" />
-                                    </DoubleAnimation.EasingFunction>
-                                </DoubleAnimation>
-                                <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(TransformGroup.Children)[0].(TranslateTransform.Y)" From="30" To="0" Duration="0:0:0.35">
-                                    <DoubleAnimation.EasingFunction>
-                                        <CubicEase EasingMode="EaseOut" />
-                                    </DoubleAnimation.EasingFunction>
-                                </DoubleAnimation>
-                                <DoubleAnimation Storyboard.TargetProperty="(FrameworkElement.LayoutTransform).(ScaleTransform.ScaleY)" From="0" To="1" Duration="0:0:0.35">
-                                    <DoubleAnimation.EasingFunction>
-                                        <CubicEase EasingMode="EaseOut" />
-                                    </DoubleAnimation.EasingFunction>
-                                </DoubleAnimation>
-                            </Storyboard>
-                        </Border.Resources>
-                        <Border.LayoutTransform>
-                            <ScaleTransform ScaleX="1" ScaleY="1" />
-                        </Border.LayoutTransform>
-                        <Border.RenderTransform>
-                            <TransformGroup>
-                                <TranslateTransform X="0" Y="0" />
-                                <ScaleTransform ScaleX="1" ScaleY="1" />
-                            </TransformGroup>
-                        </Border.RenderTransform>
-                        <Grid x:Name="CardGrid" Background="Transparent">
-                            <Grid.ColumnDefinitions>
-                                <!-- Grip -->
-                                <ColumnDefinition Width="Auto" />
-                                <!-- Icon -->
-                                <ColumnDefinition Width="Auto" />
-                                <!-- Content -->
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
+                        </Button.ContextMenu>
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <Border x:Name="RootBorder"
+                                        Padding="12" 
+                                        BorderThickness="1" 
+                                        CornerRadius="4"
+                                        RenderTransformOrigin="0.5,0.5"
+                                        Background="{TemplateBinding Background}"
+                                        BorderBrush="{DynamicResource SurfaceStrokeColorDefaultBrush}"
+                                        Loaded="ProfileBorder_Loaded">
+                                    <Border.Resources>
+                                        <Storyboard x:Key="LoadStoryboard" FillBehavior="Stop">
+                                            <DoubleAnimation Storyboard.TargetProperty="Opacity" From="0" To="1" Duration="0:0:0.35">
+                                                <DoubleAnimation.EasingFunction>
+                                                    <CubicEase EasingMode="EaseOut" />
+                                                </DoubleAnimation.EasingFunction>
+                                            </DoubleAnimation>
+                                            <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(TransformGroup.Children)[0].(TranslateTransform.Y)" From="30" To="0" Duration="0:0:0.35">
+                                                <DoubleAnimation.EasingFunction>
+                                                    <CubicEase EasingMode="EaseOut" />
+                                                </DoubleAnimation.EasingFunction>
+                                            </DoubleAnimation>
+                                            <DoubleAnimation Storyboard.TargetProperty="(FrameworkElement.LayoutTransform).(ScaleTransform.ScaleY)" From="0" To="1" Duration="0:0:0.35">
+                                                <DoubleAnimation.EasingFunction>
+                                                    <CubicEase EasingMode="EaseOut" />
+                                                </DoubleAnimation.EasingFunction>
+                                            </DoubleAnimation>
+                                        </Storyboard>
+                                    </Border.Resources>
+                                    <Border.LayoutTransform>
+                                        <ScaleTransform ScaleX="1" ScaleY="1" />
+                                    </Border.LayoutTransform>
+                                    <Border.RenderTransform>
+                                        <TransformGroup>
+                                            <TranslateTransform X="0" Y="0" />
+                                            <ScaleTransform ScaleX="1" ScaleY="1" />
+                                        </TransformGroup>
+                                    </Border.RenderTransform>
+                                    <Grid x:Name="CardGrid" Background="Transparent">
+                                        <Grid.ColumnDefinitions>
+                                            <!-- Grip -->
+                                            <ColumnDefinition Width="Auto" />
+                                            <!-- Icon -->
+                                            <ColumnDefinition Width="Auto" />
+                                            <!-- Content -->
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
 
-                            <!-- Grip Handle -->
-                            <Border Grid.Column="0" Margin="0,0,12,0" 
-                                    Background="Transparent" 
-                                    Cursor="SizeAll" 
-                                    VerticalAlignment="Center"
-                                    behaviors:LiveReorderBehavior.IsReorderGrip="True">
-                                <ui:SymbolIcon Symbol="ReOrderDotsVertical24" Foreground="Gray" />
-                            </Border>
+                                        <!-- Grip Handle -->
+                                        <Border Grid.Column="0" Margin="0,0,12,0" 
+                                                Background="Transparent" 
+                                                Cursor="SizeAll" 
+                                                VerticalAlignment="Center"
+                                                behaviors:AnimatedPressBehavior.IgnorePress="True"
+                                                behaviors:LiveReorderBehavior.IsReorderGrip="True">
+                                            <ui:SymbolIcon Symbol="ReOrderDotsVertical24" Foreground="Gray" />
+                                        </Border>
 
-                            <!-- Icon Area -->
-                            <Grid Grid.Column="1" Width="40" Margin="0,0,12,0" VerticalAlignment="Center" Cursor="Hand">
-                                <Grid.InputBindings>
-                                    <MouseBinding Gesture="LeftClick" Command="{Binding ChangeIconCommand}" />
-                                </Grid.InputBindings>
-                                <Border CornerRadius="4" Background="Transparent" ToolTip="아이콘 변경 (좌클릭)">
-                                    <Grid>
-                                        <!-- Default Icon (Native or Symbol fallback) -->
-                                        <Grid Visibility="{Binding IconPath, Converter={StaticResource NullToVis}}">
-                                            <!-- Built-in Symbol Fallback -->
-                                            <ui:SymbolIcon Symbol="Speaker224" FontSize="28" Foreground="Gray" 
-                                                           Visibility="{Binding FallbackDeviceIcon, Converter={StaticResource NullToVis}}" />
-                                            <!-- Native Device Icon -->
-                                            <Image Source="{Binding FallbackDeviceIcon}" Width="32" Height="32" Stretch="Uniform" 
-                                                   Visibility="{Binding FallbackDeviceIcon, Converter={StaticResource NotNullToVis}}" />
+                                        <!-- Icon Area -->
+                                        <Grid Grid.Column="1" Width="40" Margin="0,0,12,0" VerticalAlignment="Center">
+                                            <Border CornerRadius="4" Background="Transparent">
+                                                <Grid>
+                                                    <!-- Default Icon (Native or Symbol fallback) -->
+                                                    <Grid Visibility="{Binding IconImage, Converter={StaticResource NullToVis}}">
+                                                        <!-- Built-in Symbol Fallback -->
+                                                        <ui:SymbolIcon Symbol="Speaker224" FontSize="28" Foreground="Gray" 
+                                                                       Visibility="{Binding FallbackDeviceIcon, Converter={StaticResource NullToVis}}" />
+                                                        <!-- Native Device Icon -->
+                                                        <Image Source="{Binding FallbackDeviceIcon}" Width="32" Height="32" Stretch="Uniform" 
+                                                               Visibility="{Binding FallbackDeviceIcon, Converter={StaticResource NotNullToVis}}" />
+                                                    </Grid>
+                                                    
+                                                    <!-- Custom Icon -->
+                                                    <Image Source="{Binding IconImage}" Width="40" Height="40" Stretch="UniformToFill" 
+                                                           Visibility="{Binding IconImage, Converter={StaticResource NotNullToVis}}" />
+                                                    
+                                                    <!-- Active Checkmark Overlay -->
+                                                    <Grid HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,-4,-4"
+                                                          Visibility="{Binding IsActive, Converter={StaticResource BoolToVis}}">
+                                                        <Ellipse Width="16" Height="16" Fill="#107C10" />
+                                                        <ui:SymbolIcon Symbol="Checkmark12" FontSize="10" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                    </Grid>
+                                                </Grid>
+                                            </Border>
                                         </Grid>
-                                        
-                                        <!-- Custom Icon -->
-                                        <Image Source="{Binding IconPath}" Width="40" Height="40" Stretch="UniformToFill" 
-                                               Visibility="{Binding IconPath, Converter={StaticResource NotNullToVis}}" />
-                                        
-                                        <!-- Active Checkmark Overlay -->
-                                        <Grid HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,-4,-4"
-                                              Visibility="{Binding IsActive, Converter={StaticResource BoolToVis}}">
-                                            <Ellipse Width="16" Height="16" Fill="#107C10" />
-                                            <ui:SymbolIcon Symbol="Checkmark12" FontSize="10" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                        </Grid>
+
+                                        <!-- Profile Content -->
+                                        <StackPanel Grid.Column="2" VerticalAlignment="Center">
+                                            <Grid Margin="0,0,0,4">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="60" />
+                                                    <ColumnDefinition Width="*" />
+                                                </Grid.ColumnDefinitions>
+                                                <StackPanel Orientation="Horizontal" Grid.Column="0" VerticalAlignment="Center">
+                                                    <ui:SymbolIcon Symbol="Speaker224" Margin="0,0,4,0"/>
+                                                    <TextBlock Text="출력" FontSize="12" VerticalAlignment="Center" />
+                                                </StackPanel>
+                                                <ComboBox Grid.Column="1" 
+                                                          ItemsSource="{Binding DataContext.AvailablePlaybackDevices, RelativeSource={RelativeSource AncestorType=Page}}"
+                                                          SelectedValuePath="DeviceId"
+                                                          SelectedValue="{Binding PlaybackDeviceId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                                                    <ComboBox.ItemTemplate>
+                                                        <DataTemplate>
+                                                            <Grid Margin="0,2">
+                                                                <Grid.ColumnDefinitions>
+                                                                    <ColumnDefinition Width="Auto" />
+                                                                    <ColumnDefinition Width="*" />
+                                                                </Grid.ColumnDefinitions>
+                                                                <Image Grid.Column="0" Source="{Binding DeviceIcon}" Width="16" Height="16" Margin="0,0,6,0" VerticalAlignment="Center" />
+                                                                <TextBlock Grid.Column="1" Text="{Binding Name}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                                                            </Grid>
+                                                        </DataTemplate>
+                                                    </ComboBox.ItemTemplate>
+                                                </ComboBox>
+                                            </Grid>
+
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="60" />
+                                                    <ColumnDefinition Width="*" />
+                                                </Grid.ColumnDefinitions>
+                                                <StackPanel Orientation="Horizontal" Grid.Column="0" VerticalAlignment="Center">
+                                                    <ui:SymbolIcon Symbol="Mic24" Margin="0,0,4,0"/>
+                                                    <TextBlock Text="입력" FontSize="12" VerticalAlignment="Center" />
+                                                </StackPanel>
+                                                <ComboBox Grid.Column="1" 
+                                                          ItemsSource="{Binding DataContext.AvailableCaptureDevices, RelativeSource={RelativeSource AncestorType=Page}}"
+                                                          SelectedValuePath="DeviceId"
+                                                          SelectedValue="{Binding CaptureDeviceId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                                                    <ComboBox.ItemTemplate>
+                                                        <DataTemplate>
+                                                            <Grid Margin="0,2">
+                                                                <Grid.ColumnDefinitions>
+                                                                    <ColumnDefinition Width="Auto" />
+                                                                    <ColumnDefinition Width="*" />
+                                                                </Grid.ColumnDefinitions>
+                                                                <Image Grid.Column="0" Source="{Binding DeviceIcon}" Width="16" Height="16" Margin="0,0,6,0" VerticalAlignment="Center" />
+                                                                <TextBlock Grid.Column="1" Text="{Binding Name}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                                                            </Grid>
+                                                        </DataTemplate>
+                                                    </ComboBox.ItemTemplate>
+                                                </ComboBox>
+                                            </Grid>
+                                        </StackPanel>
                                     </Grid>
                                 </Border>
-                            </Grid>
-
-                            <!-- Profile Content -->
-                            <StackPanel Grid.Column="2" VerticalAlignment="Center">
-                                <Grid Margin="0,0,0,4">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="60" />
-                                        <ColumnDefinition Width="*" />
-                                    </Grid.ColumnDefinitions>
-                                    <StackPanel Orientation="Horizontal" Grid.Column="0" VerticalAlignment="Center">
-                                        <ui:SymbolIcon Symbol="Speaker224" Margin="0,0,4,0"/>
-                                        <TextBlock Text="출력" FontSize="12" VerticalAlignment="Center" />
-                                    </StackPanel>
-                                    <ComboBox Grid.Column="1" 
-                                              ItemsSource="{Binding DataContext.AvailablePlaybackDevices, RelativeSource={RelativeSource AncestorType=Page}}"
-                                              DisplayMemberPath="Name"
-                                              SelectedValuePath="DeviceId"
-                                              SelectedValue="{Binding PlaybackDeviceId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                                </Grid>
-
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="60" />
-                                        <ColumnDefinition Width="*" />
-                                    </Grid.ColumnDefinitions>
-                                    <StackPanel Orientation="Horizontal" Grid.Column="0" VerticalAlignment="Center">
-                                        <ui:SymbolIcon Symbol="Mic24" Margin="0,0,4,0"/>
-                                        <TextBlock Text="입력" FontSize="12" VerticalAlignment="Center" />
-                                    </StackPanel>
-                                    <ComboBox Grid.Column="1" 
-                                              ItemsSource="{Binding DataContext.AvailableCaptureDevices, RelativeSource={RelativeSource AncestorType=Page}}"
-                                              DisplayMemberPath="Name"
-                                              SelectedValuePath="DeviceId"
-                                              SelectedValue="{Binding CaptureDeviceId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                                </Grid>
-                            </StackPanel>
-                        </Grid>
-                        <Border.Style>
-                            <Style TargetType="Border">
-                                <Setter Property="Background" Value="{DynamicResource ControlFillColorDefaultBrush}" />
-                                <Setter Property="BorderBrush" Value="{DynamicResource SurfaceStrokeColorDefaultBrush}" />
-                                <Style.Triggers>
+                                <ControlTemplate.Triggers>
                                     <DataTrigger Binding="{Binding IsDeleting}" Value="True">
                                         <DataTrigger.EnterActions>
                                             <BeginStoryboard>
                                                 <Storyboard>
-                                                    <DoubleAnimation Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.35">
+                                                    <DoubleAnimation Storyboard.TargetName="RootBorder" Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.35">
                                                         <DoubleAnimation.EasingFunction>
                                                             <CubicEase EasingMode="EaseInOut" />
                                                         </DoubleAnimation.EasingFunction>
                                                     </DoubleAnimation>
-                                                    <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(TransformGroup.Children)[0].(TranslateTransform.Y)" To="30" Duration="0:0:0.35">
+                                                    <DoubleAnimation Storyboard.TargetName="RootBorder" Storyboard.TargetProperty="(UIElement.RenderTransform).(TransformGroup.Children)[0].(TranslateTransform.Y)" To="30" Duration="0:0:0.35">
                                                         <DoubleAnimation.EasingFunction>
                                                             <CubicEase EasingMode="EaseInOut" />
                                                         </DoubleAnimation.EasingFunction>
                                                     </DoubleAnimation>
-                                                    <DoubleAnimation Storyboard.TargetProperty="(FrameworkElement.LayoutTransform).(ScaleTransform.ScaleY)" To="0" Duration="0:0:0.35">
+                                                    <DoubleAnimation Storyboard.TargetName="RootBorder" Storyboard.TargetProperty="(FrameworkElement.LayoutTransform).(ScaleTransform.ScaleY)" To="0" Duration="0:0:0.35">
                                                         <DoubleAnimation.EasingFunction>
                                                             <CubicEase EasingMode="EaseInOut" />
                                                         </DoubleAnimation.EasingFunction>
@@ -181,13 +214,13 @@
                                         </DataTrigger.EnterActions>
                                     </DataTrigger>
                                     <DataTrigger Binding="{Binding IsFocused}" Value="True">
-                                        <Setter Property="Background" Value="#1A0078D7" />
-                                        <Setter Property="BorderBrush" Value="#330078D7" />
+                                        <Setter TargetName="RootBorder" Property="Background" Value="#1A0078D7" />
+                                        <Setter TargetName="RootBorder" Property="BorderBrush" Value="#330078D7" />
                                     </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </Border.Style>
-                    </Border>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Button.Template>
+                    </Button>
                 </DataTemplate>
             </ItemsControl.ItemTemplate>
         </ItemsControl>

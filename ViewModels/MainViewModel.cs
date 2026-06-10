@@ -148,8 +148,8 @@ public class MainViewModel : ViewModelBase
     {
         var devices = _audioService.GetActiveDevices();
 
-        var currentPlayback = devices.Where(d => d.DeviceType == AudioDeviceType.Playback).ToList();
-        var currentCapture = devices.Where(d => d.DeviceType == AudioDeviceType.Capture).ToList();
+        var currentPlayback = devices.Where(d => d.DeviceType == AudioDeviceType.Playback).OrderBy(d => d.Name).ToList();
+        var currentCapture = devices.Where(d => d.DeviceType == AudioDeviceType.Capture).OrderBy(d => d.Name).ToList();
 
         SyncCollection(AvailablePlaybackDevices, currentPlayback);
         SyncCollection(AvailableCaptureDevices, currentCapture);

@@ -12,6 +12,12 @@
     d:DesignWidth="440"
     mc:Ignorable="d">
 
+    <Page.Resources>
+        <Style TargetType="controls:CardToggleSwitch" BasedOn="{StaticResource {x:Type ui:CardControl}}">
+            <Setter Property="behaviors:AnimatedPressBehavior.HoverBackground" Value="{DynamicResource ControlFillColorSecondaryBrush}" />
+        </Style>
+    </Page.Resources>
+
     <StackPanel Margin="0,18,0,10" behaviors:MarginSetter.Margin="15,0,15,5">
         <controls:CardToggleSwitch IsChecked="{Binding SwitchCommunicationDevice, Mode=TwoWay}">
             <controls:CardToggleSwitch.Icon>

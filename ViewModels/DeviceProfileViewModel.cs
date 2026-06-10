@@ -70,7 +70,32 @@ public class DeviceProfileViewModel : ViewModelBase
             if (SetProperty(ref _iconPath, value))
             {
                 _profile.IconPath = value;
+                OnPropertyChanged(nameof(IconImage));
                 ProfileChanged?.Invoke();
+            }
+        }
+    }
+
+    public ImageSource? IconImage
+    {
+        get
+        {
+            string? fullPath = IconCacheService.GetIconFullPath(_iconPath);
+            if (fullPath == null) return null;
+
+            try
+            {
+                var bitmap = new System.Windows.Media.Imaging.BitmapImage();
+                bitmap.BeginInit();
+                bitmap.CacheOption = System.Windows.Media.Imaging.BitmapCacheOption.OnLoad;
+                bitmap.UriSource = new Uri(fullPath);
+                bitmap.EndInit();
+                bitmap.Freeze();
+                return bitmap;
+            }
+            catch
+            {
+                return null;
             }
         }
     }

@@ -42,10 +42,10 @@ public class CardToggleSwitch : CardControl
     #region Constructor
     public CardToggleSwitch()
     {
-        _toggleSwitch.IsHitTestVisible = false;
-
         SetResourceReference(StyleProperty, typeof(CardControl));
         AddChild(_toggleSwitch);
+
+        Behaviors.AnimatedPressBehavior.SetIsEnabled(this, true);
 
         Click += OnClick;
         _toggleSwitch.Checked += ToggleSwitch_CheckChanged;
@@ -56,6 +56,17 @@ public class CardToggleSwitch : CardControl
     #region Private Events
     private void OnClick(object sender, RoutedEventArgs e)
     {
+        // Ignore clicks that originated from the inner toggle switch to prevent double-toggling
+        if (e.OriginalSource is DependencyObject dObj)
+        {
+            var parent = dObj;
+            while (parent != null)
+            {
+                if (parent == _toggleSwitch) return;
+                parent = System.Windows.Media.VisualTreeHelper.GetParent(parent) ?? (parent as FrameworkElement)?.Parent;
+            }
+        }
+
         IsChecked = !IsChecked;
     }
 

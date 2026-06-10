@@ -36,6 +36,11 @@ public class AppSettings
     public bool SwitchCommunicationDevice { get; set; } = true;
 
     /// <summary>
+    /// Whether to show a notification when the profile is changed.
+    /// </summary>
+    public bool ShowProfileChangeNotification { get; set; } = true;
+
+    /// <summary>
     /// Whether to show the active profile icon in the system tray.
     /// </summary>
     public bool ShowProfileIconInTray { get; set; } = true;
@@ -44,9 +49,4 @@ public class AppSettings
     /// Whether to automatically run at Windows startup.
     /// </summary>
     public bool RunAtStartup { get; set; } = false;
-
-    /// <summary>
-    /// Whether to show a notification when the profile is changed.
-    /// </summary>
-    public bool ShowProfileChangeNotification { get; set; } = true;
 }
