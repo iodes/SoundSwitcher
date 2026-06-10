@@ -95,6 +95,7 @@ public class DeviceProfileViewModel : ViewModelBase
     public ICommand DeleteCommand { get; }
     public ICommand ChangeIconCommand { get; }
     public ICommand ResetIconCommand { get; }
+    public ICommand ApplyCommand { get; }
 
     private bool _isDeleting;
     public bool IsDeleting
@@ -183,6 +184,11 @@ public class DeviceProfileViewModel : ViewModelBase
                 IconCacheService.DeleteIcon(IconPath);
                 IconPath = null;
             }
+        });
+
+        ApplyCommand = new RelayCommand(() =>
+        {
+            DeviceApplyRequested?.Invoke(this);
         });
     }
 }

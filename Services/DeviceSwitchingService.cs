@@ -30,8 +30,7 @@ public class DeviceSwitchingService
 
         if (profiles.Count == 1)
         {
-            ApplyProfile(profiles[0], settings.SwitchCommunicationDevice);
-            UpdateLastSelectedProfileId(profiles[0].Id);
+            SwitchToProfile(profiles[0]);
             return profiles[0];
         }
 
@@ -47,10 +46,19 @@ public class DeviceSwitchingService
         int nextIndex = (currentIndex + 1) % profiles.Count;
         var nextProfile = profiles[nextIndex];
 
-        ApplyProfile(nextProfile, settings.SwitchCommunicationDevice);
-        UpdateLastSelectedProfileId(nextProfile.Id);
+        SwitchToProfile(nextProfile);
 
         return nextProfile;
+    }
+
+    /// <summary>
+    /// Switches to the specified profile and updates the last selected profile ID.
+    /// </summary>
+    public void SwitchToProfile(DeviceProfile profile)
+    {
+        var settings = _settingsService.Load();
+        ApplyProfile(profile, settings.SwitchCommunicationDevice);
+        UpdateLastSelectedProfileId(profile.Id);
     }
 
     private void UpdateLastSelectedProfileId(Guid id)

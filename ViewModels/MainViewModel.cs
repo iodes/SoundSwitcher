@@ -235,16 +235,8 @@ public class MainViewModel : ViewModelBase
 
     private void OnProfileApplyRequested(DeviceProfileViewModel pvm)
     {
-        if (!string.IsNullOrEmpty(pvm.PlaybackDeviceId))
-        {
-            if (_audioService.IsDeviceActive(pvm.PlaybackDeviceId))
-                _audioService.SetDefaultDevice(pvm.PlaybackDeviceId, SwitchCommunicationDevice);
-        }
-        if (!string.IsNullOrEmpty(pvm.CaptureDeviceId))
-        {
-            if (_audioService.IsDeviceActive(pvm.CaptureDeviceId))
-                _audioService.SetDefaultDevice(pvm.CaptureDeviceId, SwitchCommunicationDevice);
-        }
+        var model = pvm.GetModel();
+        _switchingService.SwitchToProfile(model);
     }
 
     public void SaveSettings()
