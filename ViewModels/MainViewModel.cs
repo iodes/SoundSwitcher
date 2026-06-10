@@ -258,7 +258,12 @@ public class MainViewModel : ViewModelBase
         if (model.CaptureDeviceId != null && model.CaptureDeviceId != currentCapture)
             needsSwitch = true;
 
-        if (!needsSwitch) return;
+        var activeProfile = _switchingService.GetCurrentActiveProfile();
+
+        // Even if the devices are already matching, if the logical 'active profile' does not match 
+        // (e.g. a newly created profile), we proceed with the switching logic to update LastSelectedProfileId.
+        if (!needsSwitch && activeProfile?.Id == model.Id)
+            return;
 
         _switchingService.SwitchToProfile(model);
         App.NotifyProfileChanged(model);

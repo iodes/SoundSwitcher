@@ -308,9 +308,13 @@ public partial class App
     {
         try
         {
-            var iconPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "app.ico");
-            if (File.Exists(iconPath))
-                return new Icon(iconPath);
+            var exePath = System.Diagnostics.Process.GetCurrentProcess().MainModule?.FileName;
+            if (!string.IsNullOrEmpty(exePath))
+            {
+                var extracted = Icon.ExtractAssociatedIcon(exePath);
+                if (extracted != null)
+                    return extracted;
+            }
         }
         catch
         {
