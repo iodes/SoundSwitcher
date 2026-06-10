@@ -1,0 +1,163 @@
+using NAudio.CoreAudioApi;
+using NAudio.CoreAudioApi.Interfaces;
+using SoundSwitcher.Models;
+using SoundSwitcher.Helpers;
+using System.Runtime.InteropServices;
+using System.Windows.Media;
+
+namespace SoundSwitcher.Services;
+
+/// <summary>
+/// Audio device management service using the Windows Core Audio API.
+/// </summary>
+public class AudioDeviceService : IMMNotificationClient
+{
+    private readonly MMDeviceEnumerator _enumerator;
+    
+    public event Action? DevicesChanged;
+
+    public AudioDeviceService()
+    {
+        _enumerator = new MMDeviceEnumerator();
+        _enumerator.RegisterEndpointNotificationCallback(this);
+    }
+
+    /// <summary>
+    /// Retrieves all active audio devices, categorized by playback and capture.
+    /// </summary>
+    public List<AudioDeviceInfo> GetActiveDevices()
+    {
+        var devices = new List<AudioDeviceInfo>();
+
+        // Playback (output) devices
+        var defaultPlayback = GetDefaultDevice(DataFlow.Render);
+        var defaultPlaybackComm = GetDefaultCommunicationDevice(DataFlow.Render);
+        var iconPropertyKey = new PropertyKey(new Guid("259abffc-50a7-47ce-af08-68c9a7d73366"), 12);
+
+        foreach (var device in _enumerator.EnumerateAudioEndPoints(DataFlow.Render, DeviceState.Active))
+        {
+            string? iconPath = null;
+            try { iconPath = device.Properties[iconPropertyKey].Value as string; } catch { }
+
+            devices.Add(new AudioDeviceInfo
+            {
+                DeviceId = device.ID,
+                Name = device.FriendlyName,
+                DeviceType = AudioDeviceType.Playback,
+                IsDefault = defaultPlayback != null && device.ID == defaultPlayback.ID,
+                IsDefaultCommunication = defaultPlaybackComm != null && device.ID == defaultPlaybackComm.ID,
+                DeviceIcon = NativeIconHelper.ExtractDeviceIcon(iconPath)
+            });
+        }
+
+        // Capture (input) devices
+        var defaultCapture = GetDefaultDevice(DataFlow.Capture);
+        var defaultCaptureComm = GetDefaultCommunicationDevice(DataFlow.Capture);
+
+        foreach (var device in _enumerator.EnumerateAudioEndPoints(DataFlow.Capture, DeviceState.Active))
+        {
+            string? iconPath = null;
+            try { iconPath = device.Properties[iconPropertyKey].Value as string; } catch { }
+
+            devices.Add(new AudioDeviceInfo
+            {
+                DeviceId = device.ID,
+                Name = device.FriendlyName,
+                DeviceType = AudioDeviceType.Capture,
+                IsDefault = defaultCapture != null && device.ID == defaultCapture.ID,
+                IsDefaultCommunication = defaultCaptureComm != null && device.ID == defaultCaptureComm.ID,
+                DeviceIcon = NativeIconHelper.ExtractDeviceIcon(iconPath)
+            });
+        }
+
+        return devices;
+    }
+
+    /// <summary>
+    /// Gets the current system default device.
+    /// </summary>
+    public MMDevice? GetDefaultDevice(DataFlow dataFlow)
+    {
+        try
+        {
+            return _enumerator.GetDefaultAudioEndpoint(dataFlow, Role.Multimedia);
+        }
+        catch (COMException)
+        {
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Gets the current system default communication device.
+    /// </summary>
+    public MMDevice? GetDefaultCommunicationDevice(DataFlow dataFlow)
+    {
+        try
+        {
+            return _enumerator.GetDefaultAudioEndpoint(dataFlow, Role.Communications);
+        }
+        catch (COMException)
+        {
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Sets a specific device as the system default device.
+    /// </summary>
+    /// <param name="deviceId">The device ID to set as default.</param>
+    /// <param name="alsoSetCommunication">Whether to also set as the communication device.</param>
+    public void SetDefaultDevice(string deviceId, bool alsoSetCommunication = true)
+    {
+        var policyConfig = (IPolicyConfig)new PolicyConfigClient();
+
+        // Set as default console/multimedia device
+        policyConfig.SetDefaultEndpoint(deviceId, ERole.eConsole);
+        policyConfig.SetDefaultEndpoint(deviceId, ERole.eMultimedia);
+
+        // Also set as communication device
+        if (alsoSetCommunication)
+        {
+            policyConfig.SetDefaultEndpoint(deviceId, ERole.eCommunications);
+        }
+    }
+
+    /// <summary>
+    /// Checks whether the device with the specified ID is currently active.
+    /// </summary>
+    public bool IsDeviceActive(string deviceId)
+    {
+        try
+        {
+            var device = _enumerator.GetDevice(deviceId);
+            return device.State == DeviceState.Active;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Gets the FriendlyName of a device by its device ID.
+    /// </summary>
+    public string? GetDeviceName(string deviceId)
+    {
+        try
+        {
+            var device = _enumerator.GetDevice(deviceId);
+            return device.FriendlyName;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    public void OnDeviceStateChanged(string deviceId, DeviceState newState) => DevicesChanged?.Invoke();
+    public void OnDeviceAdded(string pwstrDeviceId) => DevicesChanged?.Invoke();
+    public void OnDeviceRemoved(string deviceId) => DevicesChanged?.Invoke();
+    public void OnDefaultDeviceChanged(DataFlow flow, Role role, string defaultDeviceId) => DevicesChanged?.Invoke();
+    public void OnPropertyValueChanged(string pwstrDeviceId, PropertyKey key) { }
+}
