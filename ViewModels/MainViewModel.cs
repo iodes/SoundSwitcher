@@ -19,6 +19,7 @@ public class MainViewModel : ViewModelBase
     private bool _runAtStartup;
     private bool _showProfileIconInTray;
     private Guid? _focusedProfileId;
+    private bool _isReordering;
 
     public ObservableCollection<DeviceProfileViewModel> Profiles { get; } = [];
     public ObservableCollection<AudioDeviceInfo> AvailablePlaybackDevices { get; } = [];
@@ -72,6 +73,12 @@ public class MainViewModel : ViewModelBase
         }
     }
 
+    public bool IsReordering
+    {
+        get => _isReordering;
+        set => SetProperty(ref _isReordering, value);
+    }
+
     public string AppVersion =>
         $"v{System.Reflection.Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "1.0.0"}";
 
@@ -120,6 +127,7 @@ public class MainViewModel : ViewModelBase
             var pvm = new DeviceProfileViewModel(profile, isNew: false);
             pvm.ProfileChanged += SaveSettings;
             pvm.DeleteRequested += OnProfileDeleteRequested;
+            pvm.DeviceApplyRequested += OnProfileApplyRequested;
             Profiles.Add(pvm);
         }
     }
@@ -197,6 +205,7 @@ public class MainViewModel : ViewModelBase
         var pvm = new DeviceProfileViewModel(newProfile, isNew: true);
         pvm.ProfileChanged += SaveSettings;
         pvm.DeleteRequested += OnProfileDeleteRequested;
+        pvm.DeviceApplyRequested += OnProfileApplyRequested;
         Profiles.Add(pvm); // Add to the end of the list
         SaveSettings();
     }
@@ -205,6 +214,7 @@ public class MainViewModel : ViewModelBase
     {
         pvm.ProfileChanged -= SaveSettings;
         pvm.DeleteRequested -= OnProfileDeleteRequested;
+        pvm.DeviceApplyRequested -= OnProfileApplyRequested;
 
         if (!string.IsNullOrEmpty(pvm.IconPath))
         {
@@ -212,7 +222,29 @@ public class MainViewModel : ViewModelBase
         }
 
         Profiles.Remove(pvm);
+
+        var oldSettings = _settingsService.Load();
+        if (oldSettings.LastSelectedProfileId == pvm.Id)
+        {
+            oldSettings.LastSelectedProfileId = null;
+            _settingsService.Save(oldSettings);
+        }
+
         SaveSettings();
+    }
+
+    private void OnProfileApplyRequested(DeviceProfileViewModel pvm)
+    {
+        if (!string.IsNullOrEmpty(pvm.PlaybackDeviceId))
+        {
+            if (_audioService.IsDeviceActive(pvm.PlaybackDeviceId))
+                _audioService.SetDefaultDevice(pvm.PlaybackDeviceId, SwitchCommunicationDevice);
+        }
+        if (!string.IsNullOrEmpty(pvm.CaptureDeviceId))
+        {
+            if (_audioService.IsDeviceActive(pvm.CaptureDeviceId))
+                _audioService.SetDefaultDevice(pvm.CaptureDeviceId, SwitchCommunicationDevice);
+        }
     }
 
     public void SaveSettings()
@@ -227,8 +259,11 @@ public class MainViewModel : ViewModelBase
             profile.FallbackDeviceIcon = playbackDevice?.DeviceIcon;
         }
 
+        var oldSettings = _settingsService.Load();
+
         var settings = new AppSettings
         {
+            LastSelectedProfileId = oldSettings.LastSelectedProfileId,
             SwitchCommunicationDevice = SwitchCommunicationDevice,
             RunAtStartup = RunAtStartup,
             ShowProfileIconInTray = ShowProfileIconInTray,

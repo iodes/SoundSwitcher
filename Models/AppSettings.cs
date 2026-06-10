@@ -6,8 +6,11 @@ namespace SoundSwitcher.Models;
 public class DeviceProfile
 {
     public Guid Id { get; set; } = Guid.NewGuid();
+
     public string? IconPath { get; set; }
+
     public string? PlaybackDeviceId { get; set; }
+
     public string? CaptureDeviceId { get; set; }
 }
 
@@ -22,17 +25,23 @@ public class AppSettings
     public List<DeviceProfile> DeviceProfiles { get; set; } = [];
 
     /// <summary>
+    /// The ID of the last profile explicitly selected by the user.
+    /// Used as a tie-breaker when multiple profiles match current devices.
+    /// </summary>
+    public Guid? LastSelectedProfileId { get; set; }
+
+    /// <summary>
     /// Whether to also switch the default communication device.
     /// </summary>
     public bool SwitchCommunicationDevice { get; set; } = true;
 
     /// <summary>
-    /// Whether to automatically run at Windows startup.
-    /// </summary>
-    public bool RunAtStartup { get; set; } = false;
-
-    /// <summary>
     /// Whether to show the active profile icon in the system tray.
     /// </summary>
     public bool ShowProfileIconInTray { get; set; } = true;
+
+    /// <summary>
+    /// Whether to automatically run at Windows startup.
+    /// </summary>
+    public bool RunAtStartup { get; set; } = false;
 }

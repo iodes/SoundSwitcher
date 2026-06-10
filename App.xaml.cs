@@ -51,6 +51,11 @@ public partial class App
         ViewModel = new MainViewModel(AudioService, SettingsService, SwitchingService);
         ViewModel.SettingsChanged += () => NotifySettingsChanged();
 
+        AudioService.DevicesChanged += () =>
+        {
+            Dispatcher.Invoke(() => UpdateTrayIcon());
+        };
+
         InitializeUserInterface();
     }
 

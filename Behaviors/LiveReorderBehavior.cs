@@ -80,6 +80,11 @@ namespace SoundSwitcher.Behaviors
                         scale.BeginAnimation(ScaleTransform.ScaleYProperty, new DoubleAnimation(1.02, TimeSpan.FromSeconds(0.2)) { EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut } });
                     }
 
+                    if (_itemsControl.DataContext is SoundSwitcher.ViewModels.MainViewModel mainViewModel)
+                    {
+                        mainViewModel.IsReordering = true;
+                    }
+
                     grip.CaptureMouse();
                     e.Handled = true;
                 }
@@ -248,6 +253,11 @@ namespace SoundSwitcher.Behaviors
             }
             finally
             {
+                if (_itemsControl?.DataContext is SoundSwitcher.ViewModels.MainViewModel mainViewModel)
+                {
+                    mainViewModel.IsReordering = false;
+                }
+
                 _draggedItem = null;
                 _itemsControl = null;
                 _containers = null;

@@ -28,8 +28,13 @@ public class DeviceProfileViewModel : ViewModelBase
 
             if (SetProperty(ref _playbackDeviceId, value))
             {
+                bool wasActive = IsActive;
                 _profile.PlaybackDeviceId = value;
                 OnPropertyChanged(nameof(DisplayName));
+                
+                if (wasActive && value != null)
+                    DeviceApplyRequested?.Invoke(this);
+
                 ProfileChanged?.Invoke();
             }
         }
@@ -45,8 +50,13 @@ public class DeviceProfileViewModel : ViewModelBase
 
             if (SetProperty(ref _captureDeviceId, value))
             {
+                bool wasActive = IsActive;
                 _profile.CaptureDeviceId = value;
                 OnPropertyChanged(nameof(DisplayName));
+                
+                if (wasActive && value != null)
+                    DeviceApplyRequested?.Invoke(this);
+
                 ProfileChanged?.Invoke();
             }
         }
@@ -80,6 +90,7 @@ public class DeviceProfileViewModel : ViewModelBase
 
     public event Action? ProfileChanged;
     public event Action<DeviceProfileViewModel>? DeleteRequested;
+    public event Action<DeviceProfileViewModel>? DeviceApplyRequested;
 
     public ICommand DeleteCommand { get; }
     public ICommand ChangeIconCommand { get; }

@@ -9,7 +9,6 @@ public class DeviceSwitchingService
 {
     private readonly AudioDeviceService _audioService;
     private readonly SettingsService _settingsService;
-    private Guid? _lastAppliedProfileId;
 
     public DeviceSwitchingService(AudioDeviceService audioService, SettingsService settingsService)
     {
@@ -32,7 +31,7 @@ public class DeviceSwitchingService
         if (profiles.Count == 1)
         {
             ApplyProfile(profiles[0], settings.SwitchCommunicationDevice);
-            _lastAppliedProfileId = profiles[0].Id;
+            UpdateLastSelectedProfileId(profiles[0].Id);
             return profiles[0];
         }
 
@@ -49,9 +48,16 @@ public class DeviceSwitchingService
         var nextProfile = profiles[nextIndex];
 
         ApplyProfile(nextProfile, settings.SwitchCommunicationDevice);
-        _lastAppliedProfileId = nextProfile.Id;
+        UpdateLastSelectedProfileId(nextProfile.Id);
 
         return nextProfile;
+    }
+
+    private void UpdateLastSelectedProfileId(Guid id)
+    {
+        var settings = _settingsService.Load();
+        settings.LastSelectedProfileId = id;
+        _settingsService.Save(settings);
     }
 
     private void ApplyProfile(DeviceProfile profile, bool switchCommunication)
@@ -93,9 +99,9 @@ public class DeviceSwitchingService
         if (matchingProfiles.Count == 0)
             return null;
 
-        if (_lastAppliedProfileId != null)
+        if (settings.LastSelectedProfileId != null)
         {
-            var lastApplied = matchingProfiles.FirstOrDefault(p => p.Id == _lastAppliedProfileId);
+            var lastApplied = matchingProfiles.FirstOrDefault(p => p.Id == settings.LastSelectedProfileId);
             if (lastApplied != null)
             {
                 return lastApplied;
