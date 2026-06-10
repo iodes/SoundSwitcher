@@ -40,6 +40,15 @@ public partial class App
         if (Current is App app)
             app.UpdateTrayIcon();
     }
+
+    /// <summary>
+    /// Called when profile changes to show the notification toast.
+    /// </summary>
+    public static void NotifyProfileChanged(Models.DeviceProfile profile)
+    {
+        if (Current is App app)
+            app.ShowProfileNotification(profile);
+    }
     #endregion
 
     #region Startup / Exit
@@ -91,9 +100,9 @@ public partial class App
             ToolTipText = "SoundSwitcher"
         };
 
-        // Left-click: switch to next preferred device
-        _taskbarIcon.TrayLeftMouseDown += OnTrayLeftClick;
-        _taskbarIcon.TrayMouseDoubleClick += OnTrayLeftClick;
+        // Primary action (Click / Double-click): switch to next preferred device
+        _taskbarIcon.TrayLeftMouseDown += OnTrayPrimaryAction;
+        _taskbarIcon.TrayMouseDoubleClick += OnTrayPrimaryAction;
 
         // Context menu
         var menuSettings = CreateMenuItem("설정", ShowWithActivate, SymbolRegular.Settings24);
@@ -108,22 +117,45 @@ public partial class App
     #endregion
 
     #region Tray Icon
-    private void OnTrayLeftClick(object sender, RoutedEventArgs e)
+    private void OnTrayPrimaryAction(object sender, RoutedEventArgs e)
     {
+        var profileCount = ViewModel.Profiles.Count;
+        if (profileCount == 0)
+        {
+            ShowWithActivate();
+            return;
+        }
+
+        if (profileCount == 1)
+        {
+            var activeProfile = SwitchingService.GetCurrentActiveProfile();
+            if (activeProfile != null && activeProfile.Id == ViewModel.Profiles[0].Id)
+            {
+                return;
+            }
+        }
+
         var switchedProfile = SwitchingService.SwitchToNextProfile();
         if (switchedProfile == null) return;
 
         UpdateTrayIcon();
-        
+        ShowProfileNotification(switchedProfile);
+    }
+
+    private void ShowProfileNotification(Models.DeviceProfile profile)
+    {
+        var settings = SettingsService.Load();
+        if (!settings.ShowProfileChangeNotification) return;
+
         string msg = "";
-        if (switchedProfile.PlaybackDeviceId != null)
+        if (profile.PlaybackDeviceId != null)
         {
-            var pName = AudioService.GetDeviceName(switchedProfile.PlaybackDeviceId);
+            var pName = AudioService.GetDeviceName(profile.PlaybackDeviceId);
             if (!string.IsNullOrEmpty(pName)) msg += $"🔊 {pName}\n";
         }
-        if (switchedProfile.CaptureDeviceId != null)
+        if (profile.CaptureDeviceId != null)
         {
-            var cName = AudioService.GetDeviceName(switchedProfile.CaptureDeviceId);
+            var cName = AudioService.GetDeviceName(profile.CaptureDeviceId);
             if (!string.IsNullOrEmpty(cName)) msg += $"🎤 {cName}";
         }
 

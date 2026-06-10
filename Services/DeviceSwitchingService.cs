@@ -14,6 +14,22 @@ public class DeviceSwitchingService
     {
         _audioService = audioService;
         _settingsService = settingsService;
+
+        _audioService.DevicesChanged += OnDevicesChanged;
+    }
+
+    private void OnDevicesChanged()
+    {
+        var settings = _settingsService.Load();
+        if (settings.LastSelectedProfileId != null)
+        {
+            var activeProfile = GetCurrentActiveProfile();
+            if (activeProfile == null)
+            {
+                settings.LastSelectedProfileId = null;
+                _settingsService.Save(settings);
+            }
+        }
     }
 
     /// <summary>
@@ -116,6 +132,6 @@ public class DeviceSwitchingService
             }
         }
 
-        return matchingProfiles.First();
+        return null;
     }
 }

@@ -18,6 +18,7 @@ public class MainViewModel : ViewModelBase
     private bool _switchCommunicationDevice;
     private bool _runAtStartup;
     private bool _showProfileIconInTray;
+    private bool _showProfileChangeNotification;
     private Guid? _focusedProfileId;
     private bool _isReordering;
 
@@ -54,6 +55,16 @@ public class MainViewModel : ViewModelBase
         set
         {
             if (SetProperty(ref _showProfileIconInTray, value))
+                SaveSettings();
+        }
+    }
+
+    public bool ShowProfileChangeNotification
+    {
+        get => _showProfileChangeNotification;
+        set
+        {
+            if (SetProperty(ref _showProfileChangeNotification, value))
                 SaveSettings();
         }
     }
@@ -120,6 +131,7 @@ public class MainViewModel : ViewModelBase
         _switchCommunicationDevice = settings.SwitchCommunicationDevice;
         _runAtStartup = settings.RunAtStartup;
         _showProfileIconInTray = settings.ShowProfileIconInTray;
+        _showProfileChangeNotification = settings.ShowProfileChangeNotification;
 
         Profiles.Clear();
         foreach (var profile in settings.DeviceProfiles)
@@ -237,6 +249,7 @@ public class MainViewModel : ViewModelBase
     {
         var model = pvm.GetModel();
         _switchingService.SwitchToProfile(model);
+        App.NotifyProfileChanged(model);
     }
 
     public void SaveSettings()
@@ -259,6 +272,7 @@ public class MainViewModel : ViewModelBase
             SwitchCommunicationDevice = SwitchCommunicationDevice,
             RunAtStartup = RunAtStartup,
             ShowProfileIconInTray = ShowProfileIconInTray,
+            ShowProfileChangeNotification = ShowProfileChangeNotification,
             DeviceProfiles = Profiles.Select(p => p.GetModel()).ToList()
         };
 

@@ -44,4 +44,9 @@ public class AppSettings
     /// Whether to automatically run at Windows startup.
     /// </summary>
     public bool RunAtStartup { get; set; } = false;
+
+    /// <summary>
+    /// Whether to show a notification when the profile is changed.
+    /// </summary>
+    public bool ShowProfileChangeNotification { get; set; } = true;
 }

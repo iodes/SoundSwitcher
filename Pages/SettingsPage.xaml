@@ -57,5 +57,20 @@
                 </StackPanel>
             </controls:CardToggleSwitch.Header>
         </controls:CardToggleSwitch>
+
+        <controls:CardToggleSwitch IsChecked="{Binding ShowProfileChangeNotification, Mode=TwoWay}">
+            <controls:CardToggleSwitch.Icon>
+                <ui:SymbolIcon Symbol="Alert24" />
+            </controls:CardToggleSwitch.Icon>
+            <controls:CardToggleSwitch.Header>
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock
+                        FontSize="13"
+                        FontWeight="Medium"
+                        Text="프로파일 변경 알림 표시" />
+                    <TextBlock FontSize="12" Text="프로파일이 전환될 때 화면에 알림을 표시합니다." />
+                </StackPanel>
+            </controls:CardToggleSwitch.Header>
+        </controls:CardToggleSwitch>
     </StackPanel>
 </Page>
