@@ -15,14 +15,14 @@ concurrency:
 
 jobs:
   build:
-    runs-on: windows-latest
+    runs-on: windows-2025-vs2026
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
     - name: Checkout Code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
       with:
         fetch-depth: 0
 
@@ -92,7 +92,7 @@ jobs:
         }
 
     - name: Setup .NET
-      uses: actions/setup-dotnet@v4
+      uses: actions/setup-dotnet@v5
       with:
         dotnet-version: '10.x'
 
@@ -132,7 +132,7 @@ jobs:
 
     - name: Create GitHub Release
       id: create_release
-      uses: softprops/action-gh-release@v2
+      uses: softprops/action-gh-release@v3
       with:
         name: SoundSwitcher ${{ env.APP_VERSION }}
         tag_name: ${{ env.RELEASE_TAG }}
@@ -207,16 +207,16 @@ jobs:
         Set-Content -Path public/appcast.xml -Value $appcastXml
 
     - name: Setup Pages
-      uses: actions/configure-pages@v5
+      uses: actions/configure-pages@v6
 
     - name: Upload artifact
-      uses: actions/upload-pages-artifact@v3
+      uses: actions/upload-pages-artifact@v4
       with:
         path: './public'
 
     - name: Deploy to GitHub Pages
       id: deployment
-      uses: actions/deploy-pages@v5
+      uses: actions/deploy-pages@v6
 
     - name: Write Job Summary
       run: |
@@ -224,7 +224,7 @@ jobs:
         $baseUrl = "${{ vars.UPDATE_BASE_URL }}".TrimEnd('/')
         echo "### :rocket: Release $version Published!" >> $env:GITHUB_STEP_SUMMARY
         echo "" >> $env:GITHUB_STEP_SUMMARY
-        echo "#### :package: Downloads (GitHub Releases)" >> $env:GITHUB_STEP_SUMMARY
+        echo "#### :package: Package" >> $env:GITHUB_STEP_SUMMARY
         echo "- **Portable**: ``SoundSwitcher-${version}-Portable.zip``" >> $env:GITHUB_STEP_SUMMARY
         echo "- **Installer**: ``SoundSwitcher-${version}-Setup.exe``" >> $env:GITHUB_STEP_SUMMARY
         echo "" >> $env:GITHUB_STEP_SUMMARY
