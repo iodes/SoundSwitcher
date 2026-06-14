@@ -5,6 +5,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:pages="clr-namespace:SoundSwitcher.Pages"
+    xmlns:loc="clr-namespace:SoundSwitcher.Localization"
     xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
     Title="SoundSwitcher"
     Width="640"
@@ -33,19 +34,19 @@
             IsPaneToggleVisible="False"
             Navigated="RootNavigation_OnNavigated">
             <ui:NavigationView.MenuItems>
-                <ui:NavigationViewItem Content="장치" TargetPageType="{x:Type pages:DevicesPage}">
+                <ui:NavigationViewItem Content="{Binding Source={x:Static loc:LocalizationManager.Instance}, Path=[NavDevices]}" TargetPageType="{x:Type pages:DevicesPage}">
                     <ui:NavigationViewItem.Icon>
                         <ui:SymbolIcon Symbol="Speaker224" />
                     </ui:NavigationViewItem.Icon>
                 </ui:NavigationViewItem>
-                <ui:NavigationViewItem Content="설정" TargetPageType="{x:Type pages:SettingsPage}">
+                <ui:NavigationViewItem Content="{Binding Source={x:Static loc:LocalizationManager.Instance}, Path=[NavSettings]}" TargetPageType="{x:Type pages:SettingsPage}">
                     <ui:NavigationViewItem.Icon>
                         <ui:SymbolIcon Symbol="Settings24" />
                     </ui:NavigationViewItem.Icon>
                 </ui:NavigationViewItem>
             </ui:NavigationView.MenuItems>
             <ui:NavigationView.FooterMenuItems>
-                <ui:NavigationViewItem Content="정보" TargetPageType="{x:Type pages:AboutPage}">
+                <ui:NavigationViewItem Content="{Binding Source={x:Static loc:LocalizationManager.Instance}, Path=[NavAbout]}" TargetPageType="{x:Type pages:AboutPage}">
                     <ui:NavigationViewItem.Icon>
                         <ui:SymbolIcon Symbol="Info24" />
                     </ui:NavigationViewItem.Icon>

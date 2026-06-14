@@ -49,4 +49,10 @@ public class AppSettings
     /// Whether to automatically run at Windows startup.
     /// </summary>
     public bool RunAtStartup { get; set; } = false;
+
+    /// <summary>
+    /// The language code (e.g. "ko-KR", "en-US") for the application UI.
+    /// Empty string indicates system default.
+    /// </summary>
+    public string Language { get; set; } = string.Empty;
 }

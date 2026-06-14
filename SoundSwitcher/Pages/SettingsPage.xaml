@@ -5,6 +5,7 @@
     xmlns:behaviors="clr-namespace:SoundSwitcher.Behaviors"
     xmlns:controls="clr-namespace:SoundSwitcher.Controls"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:loc="clr-namespace:SoundSwitcher.Localization"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
     Title="SettingsPage"
@@ -19,6 +20,27 @@
     </Page.Resources>
 
     <StackPanel Margin="0,18,0,10" behaviors:MarginSetter.Margin="15,0,15,5">
+        <ui:CardControl>
+            <ui:CardControl.Icon>
+                <ui:SymbolIcon Symbol="LocalLanguage24" />
+            </ui:CardControl.Icon>
+            <ui:CardControl.Header>
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock
+                        FontSize="13"
+                        FontWeight="Medium"
+                        Text="{Binding Source={x:Static loc:LocalizationManager.Instance}, Path=[Language]}" />
+                    <TextBlock FontSize="12" Text="{Binding Source={x:Static loc:LocalizationManager.Instance}, Path=[LanguageDesc]}" />
+                </StackPanel>
+            </ui:CardControl.Header>
+            <ComboBox
+                Width="180"
+                DisplayMemberPath="Name"
+                ItemsSource="{Binding AvailableLanguages}"
+                SelectedValue="{Binding Language, Mode=TwoWay}"
+                SelectedValuePath="Code" />
+        </ui:CardControl>
+
         <controls:CardToggleSwitch IsChecked="{Binding RunAtStartup, Mode=TwoWay}">
             <controls:CardToggleSwitch.Icon>
                 <ui:SymbolIcon Symbol="TasksApp24" />
@@ -28,8 +50,8 @@
                     <TextBlock
                         FontSize="13"
                         FontWeight="Medium"
-                        Text="시작 프로그램 등록" />
-                    <TextBlock FontSize="12" Text="Windows 시작 시 프로그램이 자동으로 시작됩니다." />
+                        Text="{Binding Source={x:Static loc:LocalizationManager.Instance}, Path=[AutoStartup]}" />
+                    <TextBlock FontSize="12" Text="{Binding Source={x:Static loc:LocalizationManager.Instance}, Path=[AutoStartupDesc]}" />
                 </StackPanel>
             </controls:CardToggleSwitch.Header>
         </controls:CardToggleSwitch>
@@ -43,8 +65,8 @@
                     <TextBlock
                         FontSize="13"
                         FontWeight="Medium"
-                        Text="기본 통신 장치 전환" />
-                    <TextBlock FontSize="12" Text="프로파일 전환 시 기본 통신 장치도 함께 변경합니다." />
+                        Text="{Binding Source={x:Static loc:LocalizationManager.Instance}, Path=[SwitchCommunicationDevice]}" />
+                    <TextBlock FontSize="12" Text="{Binding Source={x:Static loc:LocalizationManager.Instance}, Path=[SwitchCommunicationDeviceDesc]}" />
                 </StackPanel>
             </controls:CardToggleSwitch.Header>
         </controls:CardToggleSwitch>
@@ -58,8 +80,8 @@
                     <TextBlock
                         FontSize="13"
                         FontWeight="Medium"
-                        Text="트레이에 프로파일 아이콘 표시" />
-                    <TextBlock FontSize="12" Text="활성화된 프로파일의 아이콘을 트레이에 표시합니다." />
+                        Text="{Binding Source={x:Static loc:LocalizationManager.Instance}, Path=[ShowProfileIconInTray]}" />
+                    <TextBlock FontSize="12" Text="{Binding Source={x:Static loc:LocalizationManager.Instance}, Path=[ShowProfileIconInTrayDesc]}" />
                 </StackPanel>
             </controls:CardToggleSwitch.Header>
         </controls:CardToggleSwitch>
@@ -73,8 +95,8 @@
                     <TextBlock
                         FontSize="13"
                         FontWeight="Medium"
-                        Text="프로파일 변경 알림 표시" />
-                    <TextBlock FontSize="12" Text="프로파일이 전환될 때 화면에 알림을 표시합니다." />
+                        Text="{Binding Source={x:Static loc:LocalizationManager.Instance}, Path=[ShowProfileChangeNotification]}" />
+                    <TextBlock FontSize="12" Text="{Binding Source={x:Static loc:LocalizationManager.Instance}, Path=[ShowProfileChangeNotificationDesc]}" />
                 </StackPanel>
             </controls:CardToggleSwitch.Header>
         </controls:CardToggleSwitch>

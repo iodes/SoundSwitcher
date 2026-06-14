@@ -1,6 +1,6 @@
 using System.Diagnostics;
 using System.Windows;
-using SoundSwitcher.Helpers;
+using SoundSwitcher.Services;
 
 namespace SoundSwitcher.Pages;
 

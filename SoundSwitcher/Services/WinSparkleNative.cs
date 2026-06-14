@@ -1,31 +1,35 @@
-using System;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace SoundSwitcher.Services
 {
-    public static class WinSparkleNative
+    internal static partial class WinSparkleNative
     {
         private const string DllName = "WinSparkle.dll";
 
-        [DllImport(DllName, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern void win_sparkle_init();
+        [LibraryImport(DllName)]
+        [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+        internal static partial void win_sparkle_init();
 
-        [DllImport(DllName, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern void win_sparkle_cleanup();
+        [LibraryImport(DllName)]
+        [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+        internal static partial void win_sparkle_cleanup();
 
-        [DllImport(DllName, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern void win_sparkle_set_appcast_url([MarshalAs(UnmanagedType.LPStr)] string url);
+        [LibraryImport(DllName, StringMarshalling = StringMarshalling.Utf8)]
+        [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+        internal static partial void win_sparkle_set_appcast_url(string url);
 
-        [DllImport(DllName, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
-        public static extern void win_sparkle_set_app_details(
-            [MarshalAs(UnmanagedType.LPWStr)] string company_name, 
-            [MarshalAs(UnmanagedType.LPWStr)] string app_name, 
-            [MarshalAs(UnmanagedType.LPWStr)] string app_version);
+        [LibraryImport(DllName, StringMarshalling = StringMarshalling.Utf16)]
+        [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+        internal static partial void win_sparkle_set_app_details(
+            string company_name, string app_name, string app_version);
 
-        [DllImport(DllName, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern void win_sparkle_check_update_with_ui();
+        [LibraryImport(DllName)]
+        [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+        internal static partial void win_sparkle_check_update_with_ui();
 
-        [DllImport(DllName, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern void win_sparkle_set_eddsa_public_key([MarshalAs(UnmanagedType.LPStr)] string pub_key);
+        [LibraryImport(DllName, StringMarshalling = StringMarshalling.Utf8)]
+        [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+        internal static partial void win_sparkle_set_eddsa_public_key(string pub_key);
     }
 }

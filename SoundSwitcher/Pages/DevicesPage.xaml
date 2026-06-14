@@ -6,6 +6,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    xmlns:loc="clr-namespace:SoundSwitcher.Localization"
     xmlns:vm="clr-namespace:SoundSwitcher.ViewModels"
     Title="DevicesPage"
     d:DesignHeight="500"
@@ -41,12 +42,12 @@
                         ContextMenuOpening="ProfileBorder_ContextMenuOpening">
                         <Button.ContextMenu>
                             <ContextMenu>
-                                <MenuItem Command="{Binding ChangeIconCommand}" Header="아이콘 변경" />
+                                <MenuItem Command="{Binding ChangeIconCommand}" Header="{Binding Source={x:Static loc:LocalizationManager.Instance}, Path=[ChangeIcon]}" />
                                 <MenuItem
                                     Command="{Binding ResetIconCommand}"
-                                    Header="기본 아이콘으로 초기화"
+                                    Header="{Binding Source={x:Static loc:LocalizationManager.Instance}, Path=[ResetIcon]}"
                                     Visibility="{Binding IconImage, Converter={StaticResource NotNullToVis}}" />
-                                <MenuItem Command="{Binding DeleteCommand}" Header="삭제" />
+                                <MenuItem Command="{Binding DeleteCommand}" Header="{Binding Source={x:Static loc:LocalizationManager.Instance}, Path=[Delete]}" />
                             </ContextMenu>
                         </Button.ContextMenu>
                         <Button.Template>
@@ -159,7 +160,7 @@
                                                     <TextBlock
                                                         VerticalAlignment="Center"
                                                         FontSize="12"
-                                                        Text="출력" />
+                                                        Text="{Binding Source={x:Static loc:LocalizationManager.Instance}, Path=[Output]}" />
                                                 </StackPanel>
                                                 <ComboBox
                                                     Grid.Column="1"
@@ -204,7 +205,7 @@
                                                     <TextBlock
                                                         VerticalAlignment="Center"
                                                         FontSize="12"
-                                                        Text="입력" />
+                                                        Text="{Binding Source={x:Static loc:LocalizationManager.Instance}, Path=[Input]}" />
                                                 </StackPanel>
                                                 <ComboBox
                                                     Grid.Column="1"
@@ -476,7 +477,7 @@
             </Button.Template>
             <StackPanel Orientation="Horizontal">
                 <ui:SymbolIcon Margin="0,0,8,0" Symbol="Add24" />
-                <TextBlock FontWeight="SemiBold" Text="프로파일 추가" />
+                <TextBlock FontWeight="SemiBold" Text="{Binding Source={x:Static loc:LocalizationManager.Instance}, Path=[AddProfile]}" />
             </StackPanel>
         </Button>
     </StackPanel>

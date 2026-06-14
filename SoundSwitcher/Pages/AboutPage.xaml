@@ -6,6 +6,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    xmlns:loc="clr-namespace:SoundSwitcher.Localization"
     Title="AboutPage"
     d:DesignHeight="450"
     d:DesignWidth="440"
@@ -21,7 +22,7 @@
                     <TextBlock
                         FontSize="13"
                         FontWeight="Medium"
-                        Text="프로그램 버전" />
+                        Text="{Binding Source={x:Static loc:LocalizationManager.Instance}, Path=[ProgramVersion]}" />
                     <TextBlock FontSize="12" Text="{Binding AppVersion}" />
                 </StackPanel>
             </ui:CardControl.Header>
@@ -38,8 +39,8 @@
                 <TextBlock
                     FontSize="13"
                     FontWeight="Medium"
-                    Text="업데이트 확인" />
-                <TextBlock FontSize="12" Text="프로그램의 최신 업데이트를 확인 및 설치합니다." />
+                    Text="{Binding Source={x:Static loc:LocalizationManager.Instance}, Path=[CheckUpdate]}" />
+                <TextBlock FontSize="12" Text="{Binding Source={x:Static loc:LocalizationManager.Instance}, Path=[CheckUpdateDesc]}" />
             </StackPanel>
         </ui:CardAction>
 
@@ -54,8 +55,8 @@
                 <TextBlock
                     FontSize="13"
                     FontWeight="Medium"
-                    Text="홈페이지" />
-                <TextBlock FontSize="12" Text="프로그램의 공식 홈페이지를 방문합니다." />
+                    Text="{Binding Source={x:Static loc:LocalizationManager.Instance}, Path=[Homepage]}" />
+                <TextBlock FontSize="12" Text="{Binding Source={x:Static loc:LocalizationManager.Instance}, Path=[HomepageDesc]}" />
             </StackPanel>
         </ui:CardAction>
     </StackPanel>

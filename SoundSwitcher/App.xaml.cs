@@ -120,6 +120,9 @@ public partial class App
         SettingsService = new SettingsService();
         SwitchingService = new DeviceSwitchingService(AudioService, SettingsService);
 
+        // Initialise Localization
+        Localization.LocalizationManager.Instance.ApplyFromSettings(SettingsService.Load().Language);
+
         // Initialise ViewModel
         ViewModel = new MainViewModel(AudioService, SettingsService, SwitchingService);
         ViewModel.SettingsChanged += NotifySettingsChanged;
@@ -143,7 +146,10 @@ public partial class App
         {
 #if RELEASE
             try { WinSparkleNative.win_sparkle_cleanup(); }
-            catch { }
+            catch
+            {
+                // ignored
+            }
 #endif
             _mainWindow.Close();
             _taskbarIcon.IsEnabled = false;
@@ -196,16 +202,24 @@ public partial class App
 
         // Context menu
         _trayContextMenu = new ContextMenu();
-        var menuSettings = CreateMenuItem("프로그램 설정", ShowWithActivate, SymbolRegular.Settings24);
-        var menuSystemSoundSettings = CreateMenuItem("시스템 소리 설정", OpenSystemSoundSettings, SymbolRegular.Speaker224);
+        var menuSettings = CreateMenuItem(Localization.LocalizationManager.Instance["TrayMenuSettings"], ShowWithActivate, SymbolRegular.Settings24);
+        var menuSystemSoundSettings = CreateMenuItem(Localization.LocalizationManager.Instance["TrayMenuSystemSound"], OpenSystemSoundSettings, SymbolRegular.Speaker224);
 
-        var menuExit = CreateMenuItem("종료", () => Current.Shutdown(), SymbolRegular.ArrowExit20);
+        var menuExit = CreateMenuItem(Localization.LocalizationManager.Instance["TrayMenuExit"], () => Current.Shutdown(), SymbolRegular.ArrowExit20);
 
         _trayContextMenu.Items.Add(menuSettings);
         _trayContextMenu.Items.Add(menuSystemSoundSettings);
 
         _trayContextMenu.Items.Add(new Separator());
         _trayContextMenu.Items.Add(menuExit);
+
+        Localization.LocalizationManager.Instance.PropertyChanged += (s, e) =>
+        {
+            menuSettings.Header = Localization.LocalizationManager.Instance["TrayMenuSettings"];
+            menuSystemSoundSettings.Header = Localization.LocalizationManager.Instance["TrayMenuSystemSound"];
+            menuExit.Header = Localization.LocalizationManager.Instance["TrayMenuExit"];
+            UpdateTrayIcon();
+        };
 
         _taskbarIcon.TrayRightMouseUp += OnTrayRightMouseUp;
 
@@ -324,7 +338,7 @@ public partial class App
 
         if (activeProfile == null)
         {
-            _taskbarIcon.ToolTipText = "SoundSwitcher - 장치 없음";
+            _taskbarIcon.ToolTipText = "SoundSwitcher - " + Localization.LocalizationManager.Instance["TrayNoDevice"];
             _taskbarIcon.ClearValue(TaskbarIcon.IconSourceProperty);
             _taskbarIcon.Icon = GetAppIcon();
             return;

@@ -19,6 +19,28 @@ public class MainViewModel : ViewModelBase
     private bool _runAtStartup;
     private bool _showProfileIconInTray;
     private bool _showProfileChangeNotification;
+    private string _language = string.Empty;
+
+    public class LanguageOption(string code, string name) : ViewModelBase
+    {
+        public string Code { get; } = code;
+
+        public string Name
+        {
+            get;
+            set => SetProperty(ref field, value);
+        } = name;
+    }
+
+    public ObservableCollection<LanguageOption> AvailableLanguages { get; } =
+    [
+        new("", Localization.LocalizationManager.Instance["LanguageAuto"]),
+        new("en-US", "English"),
+        new("ko-KR", "한국어"),
+        new("ja-JP", "日本語"),
+        new("zh-CN", "中文(简体)"),
+        new("zh-TW", "中文(繁體)")
+    ];
 
     public ObservableCollection<DeviceProfileViewModel> Profiles { get; } = [];
 
@@ -66,6 +88,20 @@ public class MainViewModel : ViewModelBase
         {
             if (SetProperty(ref _showProfileChangeNotification, value))
                 SaveSettings();
+        }
+    }
+
+    public string Language
+    {
+        get => _language;
+        set
+        {
+            if (SetProperty(ref _language, value))
+            {
+                Localization.LocalizationManager.Instance.ApplyFromSettings(value);
+                SaveSettings();
+                AvailableLanguages[0].Name = Localization.LocalizationManager.Instance["LanguageAuto"];
+            }
         }
     }
 
@@ -129,6 +165,8 @@ public class MainViewModel : ViewModelBase
         _runAtStartup = settings.RunAtStartup;
         _showProfileIconInTray = settings.ShowProfileIconInTray;
         _showProfileChangeNotification = settings.ShowProfileChangeNotification;
+        _language = settings.Language;
+        OnPropertyChanged(nameof(Language));
 
         Profiles.Clear();
 
@@ -287,6 +325,7 @@ public class MainViewModel : ViewModelBase
             RunAtStartup = RunAtStartup,
             ShowProfileIconInTray = ShowProfileIconInTray,
             ShowProfileChangeNotification = ShowProfileChangeNotification,
+            Language = Language,
             DeviceProfiles = Profiles.Select(p => p.GetModel()).ToList()
         };
 
