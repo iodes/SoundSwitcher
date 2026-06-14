@@ -154,18 +154,38 @@ jobs:
         $fileSize = (Get-Item "SoundSwitcher-${version}-Portable.zip").Length
         
         # 1. Process multilingual release notes into a single HTML file with JS routing
-        $langs = @("en-US", "ko-KR", "ja-JP", "zh-CN", "zh-TW")
+        if (Test-Path "ReleaseNotes") {
+            $langs = Get-ChildItem -Path "ReleaseNotes" -Filter "*.md" -Recurse -ErrorAction SilentlyContinue | Select-Object -ExpandProperty BaseName | Sort-Object -Unique
+        } else {
+            $langs = @()
+        }
+        if (-not $langs) { $langs = @("en-US") }
         $combinedHtml = "<html><head><meta charset='utf-8'><style>body{font-family:sans-serif;} .lang-content{display:none;}</style>"
         $combinedHtml += "<script>window.onload = function() { var lang = (navigator.language || navigator.userLanguage || 'en').substring(0,2); var el = document.getElementById('content-' + lang); if (el) { el.style.display = 'block'; } else { var def = document.getElementById('content-en'); if(def) def.style.display = 'block'; else { var first = document.querySelector('.lang-content'); if(first) first.style.display = 'block'; } } };</script></head><body><h2>SoundSwitcher $version</h2>"
         
         foreach ($lang in $langs) {
             $versionFile = "ReleaseNotes/${{ env.RELEASE_TAG }}/${lang}.md"
-            $defaultFile = "ReleaseNotes/default/${lang}.md"
             
+            $mdFileToRead = $null
             if (Test-Path $versionFile) {
-                $mdHtml = (ConvertFrom-Markdown -Path $versionFile).Html
-            } elseif (Test-Path $defaultFile) {
-                $mdHtml = (ConvertFrom-Markdown -Path $defaultFile).Html
+                $mdFileToRead = $versionFile
+            } else {
+                if (Test-Path "ReleaseNotes") {
+                    $fallbackFolders = Get-ChildItem -Path "ReleaseNotes" -Directory -ErrorAction SilentlyContinue | Where-Object { $_.Name -match "^[0-9]+\.[0-9]+\.[0-9]+(\.[0-9]+)?$" } | Sort-Object -Property @{Expression={[System.Version]$_.Name}; Descending=$true}
+                    if ($null -ne $fallbackFolders) {
+                        foreach ($folder in $fallbackFolders) {
+                            $possibleFile = Join-Path $folder.FullName "${lang}.md"
+                            if (Test-Path $possibleFile) {
+                                $mdFileToRead = $possibleFile
+                                break
+                            }
+                        }
+                    }
+                }
+            }
+            
+            if ($mdFileToRead) {
+                $mdHtml = (ConvertFrom-Markdown -Path $mdFileToRead).Html
             } else {
                 $mdHtml = "<p>No release notes available.</p>"
             }
