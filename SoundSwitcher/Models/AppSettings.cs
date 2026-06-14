@@ -25,6 +25,11 @@ public class AppSettings
     public List<DeviceProfile> DeviceProfiles { get; set; } = [];
 
     /// <summary>
+    /// The ID of the default profile to be applied at startup.
+    /// </summary>
+    public Guid? DefaultProfileId { get; set; }
+
+    /// <summary>
     /// The ID of the last profile explicitly selected by the user.
     /// Used as a tie-breaker when multiple profiles match current devices.
     /// </summary>

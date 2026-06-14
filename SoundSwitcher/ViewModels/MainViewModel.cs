@@ -172,9 +172,11 @@ public class MainViewModel : ViewModelBase
 
         foreach (var pvm in settings.DeviceProfiles.Select(profile => new DeviceProfileViewModel(profile, isNew: false)))
         {
+            pvm.IsDefaultProfile = settings.DefaultProfileId == pvm.Id;
             pvm.ProfileChanged += SaveSettings;
             pvm.DeleteRequested += OnProfileDeleteRequested;
             pvm.DeviceApplyRequested += OnProfileApplyRequested;
+            pvm.ToggleDefaultRequested += OnProfileToggleDefaultRequested;
             Profiles.Add(pvm);
         }
     }
@@ -255,6 +257,7 @@ public class MainViewModel : ViewModelBase
         pvm.ProfileChanged += SaveSettings;
         pvm.DeleteRequested += OnProfileDeleteRequested;
         pvm.DeviceApplyRequested += OnProfileApplyRequested;
+        pvm.ToggleDefaultRequested += OnProfileToggleDefaultRequested;
         Profiles.Add(pvm); // Add to the end of the list
         SaveSettings();
     }
@@ -264,6 +267,7 @@ public class MainViewModel : ViewModelBase
         pvm.ProfileChanged -= SaveSettings;
         pvm.DeleteRequested -= OnProfileDeleteRequested;
         pvm.DeviceApplyRequested -= OnProfileApplyRequested;
+        pvm.ToggleDefaultRequested -= OnProfileToggleDefaultRequested;
 
         if (!string.IsNullOrEmpty(pvm.IconPath))
         {
@@ -274,13 +278,47 @@ public class MainViewModel : ViewModelBase
 
         var oldSettings = _settingsService.Load();
 
+        bool oldSettingsModified = false;
+
         if (oldSettings.LastSelectedProfileId == pvm.Id)
         {
             oldSettings.LastSelectedProfileId = null;
+            oldSettingsModified = true;
+        }
+
+        if (oldSettings.DefaultProfileId == pvm.Id)
+        {
+            oldSettings.DefaultProfileId = null;
+            oldSettingsModified = true;
+        }
+
+        if (oldSettingsModified)
+        {
             _settingsService.Save(oldSettings);
         }
 
         SaveSettings();
+    }
+
+    private void OnProfileToggleDefaultRequested(DeviceProfileViewModel pvm)
+    {
+        var oldSettings = _settingsService.Load();
+
+        if (oldSettings.DefaultProfileId == pvm.Id)
+        {
+            oldSettings.DefaultProfileId = null;
+        }
+        else
+        {
+            oldSettings.DefaultProfileId = pvm.Id;
+        }
+
+        _settingsService.Save(oldSettings);
+
+        foreach (var profile in Profiles)
+        {
+            profile.IsDefaultProfile = oldSettings.DefaultProfileId == profile.Id;
+        }
     }
 
     private void OnProfileApplyRequested(DeviceProfileViewModel pvm)
@@ -320,6 +358,7 @@ public class MainViewModel : ViewModelBase
 
         var settings = new AppSettings
         {
+            DefaultProfileId = oldSettings.DefaultProfileId,
             LastSelectedProfileId = oldSettings.LastSelectedProfileId,
             SwitchCommunicationDevice = SwitchCommunicationDevice,
             RunAtStartup = RunAtStartup,

@@ -132,6 +132,24 @@ public partial class App
             Dispatcher.Invoke(UpdateTrayIcon);
         };
 
+        // Apply default profile at startup if needed
+        var startupSettings = SettingsService.Load();
+
+        if (startupSettings.DefaultProfileId.HasValue)
+        {
+            var defaultProfile = startupSettings.DeviceProfiles.FirstOrDefault(p => p.Id == startupSettings.DefaultProfileId.Value);
+
+            if (defaultProfile != null)
+            {
+                var activeProfile = SwitchingService.GetCurrentActiveProfile();
+
+                if (activeProfile == null || activeProfile.Id != defaultProfile.Id)
+                {
+                    SwitchingService.SwitchToProfile(defaultProfile);
+                }
+            }
+        }
+
         InitializeUserInterface();
 
         if (Environment.GetCommandLineArgs().Contains("/Activate", StringComparer.OrdinalIgnoreCase))
@@ -202,6 +220,7 @@ public partial class App
 
         // Context menu
         _trayContextMenu = new ContextMenu();
+        _trayContextMenu.Style = (Style)Current.Resources["TrayContextMenuStyle"];
         var menuSettings = CreateMenuItem(Localization.LocalizationManager.Instance["TrayMenuSettings"], ShowWithActivate, SymbolRegular.Settings24);
         var menuSystemSoundSettings = CreateMenuItem(Localization.LocalizationManager.Instance["TrayMenuSystemSound"], OpenSystemSoundSettings, SymbolRegular.Speaker224);
 
@@ -213,7 +232,7 @@ public partial class App
         _trayContextMenu.Items.Add(new Separator());
         _trayContextMenu.Items.Add(menuExit);
 
-        Localization.LocalizationManager.Instance.PropertyChanged += (s, e) =>
+        Localization.LocalizationManager.Instance.PropertyChanged += (_, _) =>
         {
             menuSettings.Header = Localization.LocalizationManager.Instance["TrayMenuSettings"];
             menuSystemSoundSettings.Header = Localization.LocalizationManager.Instance["TrayMenuSystemSound"];

@@ -21,7 +21,7 @@ public class DeviceProfileViewModel : ViewModelBase
         set
         {
             if (value == null && _playbackDeviceId != null)
-                return; // Prevent WPF ComboBox from resetting to null when items source refreshes or device is unplugged
+                return;
 
             if (SetProperty(ref _playbackDeviceId, value))
             {
@@ -42,7 +42,7 @@ public class DeviceProfileViewModel : ViewModelBase
         set
         {
             if (value == null && _captureDeviceId != null)
-                return; // Prevent WPF ComboBox from resetting to null when items source refreshes or device is unplugged
+                return;
 
             if (SetProperty(ref _captureDeviceId, value))
             {
@@ -117,6 +117,8 @@ public class DeviceProfileViewModel : ViewModelBase
 
     public event Action<DeviceProfileViewModel>? DeviceApplyRequested;
 
+    public event Action<DeviceProfileViewModel>? ToggleDefaultRequested;
+
     public ICommand DeleteCommand { get; }
 
     public ICommand ChangeIconCommand { get; }
@@ -124,6 +126,8 @@ public class DeviceProfileViewModel : ViewModelBase
     public ICommand ResetIconCommand { get; }
 
     public ICommand ApplyCommand { get; }
+
+    public ICommand ToggleDefaultCommand { get; }
 
     public bool IsDeleting
     {
@@ -141,6 +145,26 @@ public class DeviceProfileViewModel : ViewModelBase
     {
         get;
         set => SetProperty(ref field, value);
+    }
+
+    public bool IsDefaultProfile
+    {
+        get;
+        set => SetProperty(ref field, value);
+    }
+
+    public string ToggleDefaultMenuText => IsDefaultProfile 
+        ? Localization.LocalizationManager.Instance["UnsetDefaultProfile"] 
+        : Localization.LocalizationManager.Instance["SetDefaultProfile"];
+
+    public Wpf.Ui.Controls.SymbolRegular ToggleDefaultIcon => IsDefaultProfile
+        ? Wpf.Ui.Controls.SymbolRegular.StarOff24
+        : Wpf.Ui.Controls.SymbolRegular.Star24;
+
+    public void NotifyMenuState()
+    {
+        OnPropertyChanged(nameof(ToggleDefaultMenuText));
+        OnPropertyChanged(nameof(ToggleDefaultIcon));
     }
 
     public ImageSource? FallbackDeviceIcon
@@ -168,6 +192,8 @@ public class DeviceProfileViewModel : ViewModelBase
         _playbackDeviceId = profile.PlaybackDeviceId;
         _captureDeviceId = profile.CaptureDeviceId;
         _iconPath = profile.IconPath;
+
+        ToggleDefaultCommand = new RelayCommand(() => ToggleDefaultRequested?.Invoke(this));
 
         DeleteCommand = new RelayCommand(async void () =>
         {

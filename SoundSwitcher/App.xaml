@@ -3,8 +3,8 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
-    Startup="App_OnStartup"
-    Exit="App_OnExit">
+    Exit="App_OnExit"
+    Startup="App_OnStartup">
 
     <Application.Resources>
         <ResourceDictionary>
@@ -12,6 +12,47 @@
                 <ui:ThemesDictionary Theme="Dark" />
                 <ui:ControlsDictionary />
             </ResourceDictionary.MergedDictionaries>
+
+            <Style
+                x:Key="TrayContextMenuStyle"
+                BasedOn="{StaticResource {x:Type ContextMenu}}"
+                TargetType="ContextMenu">
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="ContextMenu">
+                            <Border
+                                Name="Border"
+                                Padding="0,3,0,3"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="1"
+                                CornerRadius="8">
+                                <StackPanel
+                                    ClipToBounds="True"
+                                    IsItemsHost="True"
+                                    KeyboardNavigation.DirectionalNavigation="Cycle"
+                                    Orientation="Vertical" />
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="Popup.IsOpen" Value="True">
+                                    <Trigger.EnterActions>
+                                        <BeginStoryboard>
+                                            <Storyboard>
+                                                <DoubleAnimation
+                                                    Storyboard.TargetName="Border"
+                                                    Storyboard.TargetProperty="Opacity"
+                                                    From="0"
+                                                    To="1"
+                                                    Duration="0:0:0.15" />
+                                            </Storyboard>
+                                        </BeginStoryboard>
+                                    </Trigger.EnterActions>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

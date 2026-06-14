@@ -83,18 +83,17 @@ jobs:
     - name: Restore dependencies
       run: dotnet restore
 
-    - name: Build and Publish Portable (ZIP)
+    - name: Build and Publish
       run: |
         $version = "${{ env.RELEASE_TAG }}"
-        dotnet publish SoundSwitcher/SoundSwitcher.csproj -c Release -r win-x64 --self-contained false -p:Version=$version -p:AppcastUrl="${{ vars.UPDATE_BASE_URL }}/appcast.xml" -o out/portable
-        Compress-Archive -Path out/portable/* -DestinationPath "SoundSwitcher-${version}-Portable.zip"
+        dotnet publish SoundSwitcher/SoundSwitcher.csproj -c Release -r win-x64 --self-contained false -p:Version=$version -p:AppcastUrl="${{ vars.UPDATE_BASE_URL }}/appcast.xml" -o out/publish
 
     - name: Prepare Installer Files
       run: |
         $version = "${{ env.RELEASE_TAG }}"
         echo "APP_VERSION=$version" >> $env:GITHUB_ENV
         New-Item -ItemType Directory -Force -Path "SoundSwitcher\bin\Release\net10.0-windows\publish"
-        Copy-Item -Path "out/portable\*" -Destination "SoundSwitcher\bin\Release\net10.0-windows\publish" -Recurse
+        Copy-Item -Path "out/publish\*" -Destination "SoundSwitcher\bin\Release\net10.0-windows\publish" -Recurse
 
     - name: Compile Inno Setup Installer
       run: |
@@ -109,7 +108,7 @@ jobs:
         $privateKeyPath = "dsa_priv.pem"
         Set-Content -Path $privateKeyPath -Value "${{ secrets.WINSPARKLE_PRIVATE_KEY }}"
         
-        $signature = & .\Libraries\WinSparkle\winsparkle-tool.exe sign -f $privateKeyPath "SoundSwitcher-${version}-Portable.zip"
+        $signature = & .\Libraries\WinSparkle\winsparkle-tool.exe sign -f $privateKeyPath "Installer/Output/SoundSwitcher-${version}-Setup.exe"
         echo "EDDSA_SIGNATURE=$signature" >> $env:GITHUB_ENV
         
         Remove-Item $privateKeyPath
@@ -119,10 +118,10 @@ jobs:
       run: |
         mkdir public
         $version = "${{ env.RELEASE_TAG }}"
-        $downloadUrl = "https://github.com/${{ github.repository }}/releases/download/${{ env.RELEASE_TAG }}/SoundSwitcher-${version}-Portable.zip"
+        $downloadUrl = "https://github.com/${{ github.repository }}/releases/download/${{ env.RELEASE_TAG }}/SoundSwitcher-${version}-Setup.exe"
         $signature = $env:EDDSA_SIGNATURE
         $pubDate = (Get-Date).ToString("R")
-        $fileSize = (Get-Item "SoundSwitcher-${version}-Portable.zip").Length
+        $fileSize = (Get-Item "Installer/Output/SoundSwitcher-${version}-Setup.exe").Length
         
         # 1. Process multilingual release notes into a single HTML file with JS routing
         if (Test-Path "ReleaseNotes") {
@@ -220,7 +219,6 @@ jobs:
         name: SoundSwitcher ${{ env.APP_VERSION }}
         tag_name: ${{ env.RELEASE_TAG }}
         files: |
-          SoundSwitcher-*-Portable.zip
           Installer/Output/SoundSwitcher-*-Setup.exe
         generate_release_notes: true
       env:
@@ -234,8 +232,7 @@ jobs:
         echo "" >> $env:GITHUB_STEP_SUMMARY
         echo "#### :package: Package" >> $env:GITHUB_STEP_SUMMARY
         echo "- **Installer**: ``SoundSwitcher-${version}-Setup.exe``" >> $env:GITHUB_STEP_SUMMARY
-        echo "- **Portable**: ``SoundSwitcher-${version}-Portable.zip``" >> $env:GITHUB_STEP_SUMMARY
         echo "" >> $env:GITHUB_STEP_SUMMARY
         echo "#### :globe_with_meridians: GitHub Pages" >> $env:GITHUB_STEP_SUMMARY
         echo "- **Appcast XML**: $baseUrl/appcast.xml" >> $env:GITHUB_STEP_SUMMARY
-        echo "- **Release Notes**: $baseUrl/release-notes-default.html" >> $env:GITHUB_STEP_SUMMARY
+        echo "- **Release Notes**: $baseUrl/release-notes.html" >> $env:GITHUB_STEP_SUMMARY

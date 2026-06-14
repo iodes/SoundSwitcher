@@ -1,9 +1,4 @@
-# Capability: auto-update
-
-## Purpose
-TBD (Provides auto-update functionality via WinSparkle)
-
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: 자동 업데이트 확인
 시스템은(SHALL) WinSparkle 라이브러리를 사용하여 앱이 실행될 때 백그라운드에서 최신 업데이트가 있는지 확인해야 하며, 업데이트 설치 시 제공되는 설치 프로그램(.exe 등)을 다운로드하고 실행하여 설치를 진행해야 합니다.
@@ -15,11 +10,3 @@ TBD (Provides auto-update functionality via WinSparkle)
 #### Scenario: 업데이트 설치 수행
 - **WHEN** 사용자가 업데이트 알림 창에서 설치를 수락할 때
 - **THEN** 시스템은 Appcast에 지정된 설치 실행 파일을 다운로드하고 실행하여 업데이트 설치 프로세스를 진행합니다.
-
-
-### Requirement: 수동 업데이트 확인
-시스템은(SHALL) 사용자가 트레이 아이콘 메뉴를 통해 명시적으로 업데이트를 확인할 수 있는 기능을 제공해야 합니다.
-
-#### Scenario: 트레이 메뉴에서 업데이트 확인
-- **WHEN** 사용자가 트레이 아이콘의 '업데이트 확인' 메뉴를 클릭할 때
-- **THEN** 시스템은 즉시 업데이트를 확인하고, 최신 버전일 경우 안내 메시지를, 새로운 버전이 있을 경우 업데이트 창을 표시합니다.

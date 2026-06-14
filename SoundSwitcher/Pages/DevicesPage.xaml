@@ -4,9 +4,9 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:behaviors="clr-namespace:SoundSwitcher.Behaviors"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:loc="clr-namespace:SoundSwitcher.Localization"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
-    xmlns:loc="clr-namespace:SoundSwitcher.Localization"
     xmlns:vm="clr-namespace:SoundSwitcher.ViewModels"
     Title="DevicesPage"
     d:DesignHeight="500"
@@ -42,12 +42,29 @@
                         ContextMenuOpening="ProfileBorder_ContextMenuOpening">
                         <Button.ContextMenu>
                             <ContextMenu>
-                                <MenuItem Command="{Binding ChangeIconCommand}" Header="{Binding Source={x:Static loc:LocalizationManager.Instance}, Path=[ChangeIcon]}" />
+                                <MenuItem Command="{Binding ToggleDefaultCommand}" Header="{Binding ToggleDefaultMenuText}">
+                                    <MenuItem.Icon>
+                                        <ui:SymbolIcon Symbol="{Binding ToggleDefaultIcon}" />
+                                    </MenuItem.Icon>
+                                </MenuItem>
+                                <MenuItem Command="{Binding ChangeIconCommand}" Header="{Binding Source={x:Static loc:LocalizationManager.Instance}, Path=[ChangeIcon]}">
+                                    <MenuItem.Icon>
+                                        <ui:SymbolIcon Symbol="Image24" />
+                                    </MenuItem.Icon>
+                                </MenuItem>
                                 <MenuItem
                                     Command="{Binding ResetIconCommand}"
                                     Header="{Binding Source={x:Static loc:LocalizationManager.Instance}, Path=[ResetIcon]}"
-                                    Visibility="{Binding IconImage, Converter={StaticResource NotNullToVis}}" />
-                                <MenuItem Command="{Binding DeleteCommand}" Header="{Binding Source={x:Static loc:LocalizationManager.Instance}, Path=[Delete]}" />
+                                    Visibility="{Binding IconImage, Converter={StaticResource NotNullToVis}}">
+                                    <MenuItem.Icon>
+                                        <ui:SymbolIcon Symbol="ArrowCounterclockwise24" />
+                                    </MenuItem.Icon>
+                                </MenuItem>
+                                <MenuItem Command="{Binding DeleteCommand}" Header="{Binding Source={x:Static loc:LocalizationManager.Instance}, Path=[Delete]}">
+                                    <MenuItem.Icon>
+                                        <ui:SymbolIcon Symbol="Delete24" />
+                                    </MenuItem.Icon>
+                                </MenuItem>
                             </ContextMenu>
                         </Button.ContextMenu>
                         <Button.Template>
@@ -317,6 +334,10 @@
                                         <Setter TargetName="RootBorder" Property="Background" Value="#1A0078D7" />
                                         <Setter TargetName="RootBorder" Property="BorderBrush" Value="#330078D7" />
                                     </DataTrigger>
+                                    <DataTrigger Binding="{Binding IsDefaultProfile}" Value="True">
+                                        <Setter TargetName="RootBorder" Property="BorderBrush" Value="#0078D7" />
+                                        <Setter TargetName="RootBorder" Property="BorderThickness" Value="1.5" />
+                                    </DataTrigger>
                                 </ControlTemplate.Triggers>
                             </ControlTemplate>
                         </Button.Template>
@@ -346,7 +367,10 @@
             </Button.Style>
             <Button.Template>
                 <ControlTemplate TargetType="Button">
-                    <Grid x:Name="RootGrid" Background="Transparent" RenderTransformOrigin="0.5,0.5">
+                    <Grid
+                        x:Name="RootGrid"
+                        Background="Transparent"
+                        RenderTransformOrigin="0.5,0.5">
                         <Grid.RenderTransform>
                             <ScaleTransform ScaleX="1" ScaleY="1" />
                         </Grid.RenderTransform>
@@ -369,7 +393,7 @@
                             VerticalAlignment="Center" />
                     </Grid>
                     <ControlTemplate.Triggers>
-                        <!-- IsPressed Trigger for ScaleTransform -->
+                        <!--  IsPressed Trigger for ScaleTransform  -->
                         <Trigger Property="IsPressed" Value="True">
                             <Trigger.EnterActions>
                                 <BeginStoryboard>
@@ -421,7 +445,7 @@
                             </Trigger.ExitActions>
                         </Trigger>
 
-                        <!-- IsMouseOver Trigger for Hover Effects -->
+                        <!--  IsMouseOver Trigger for Hover Effects  -->
                         <Trigger Property="IsMouseOver" Value="True">
                             <Trigger.EnterActions>
                                 <BeginStoryboard>

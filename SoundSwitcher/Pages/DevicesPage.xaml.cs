@@ -1,8 +1,6 @@
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Input;
 using SoundSwitcher.ViewModels;
-using System.Windows.Media;
 
 namespace SoundSwitcher.Pages;
 
@@ -10,29 +8,29 @@ namespace SoundSwitcher.Pages;
 /// Devices tab page — displays playback and capture device lists
 /// bound to the MainViewModel via DataContext inheritance.
 /// </summary>
-public partial class DevicesPage : Page
+public partial class DevicesPage
 {
     public DevicesPage()
     {
         InitializeComponent();
     }
 
-
-
     private void ProfileBorder_ContextMenuOpening(object sender, ContextMenuEventArgs e)
     {
-        if (sender is FrameworkElement element && element.DataContext is DeviceProfileViewModel vm)
+        if (sender is FrameworkElement { DataContext: DeviceProfileViewModel vm })
         {
             if (DataContext is MainViewModel mainVm)
             {
                 mainVm.FocusedProfileId = vm.Id;
             }
+
+            vm.NotifyMenuState();
         }
     }
 
     private void ProfileBorder_ContextMenuClosing(object sender, ContextMenuEventArgs e)
     {
-        if (sender is FrameworkElement element && element.DataContext is DeviceProfileViewModel vm)
+        if (sender is FrameworkElement { DataContext: DeviceProfileViewModel vm })
         {
             if (DataContext is MainViewModel mainVm)
             {
@@ -45,5 +43,4 @@ public partial class DevicesPage : Page
             }
         }
     }
-
 }
