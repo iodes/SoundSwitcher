@@ -77,6 +77,13 @@ public partial class ProfileChangeNotification : UserControl
     {
         MessageText.Text = message;
 
+        if (_isClosing)
+        {
+            _isClosing = false;
+            RootBorder.BeginAnimation(UIElement.OpacityProperty, null);
+            RootBorder.Opacity = 1.0;
+        }
+
         // Reset the timeout
         _closeTimer?.Stop();
         _closeTimer?.Start();

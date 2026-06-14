@@ -15,8 +15,8 @@
 
     <Page.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis" />
-        <local:NullToVisibilityConverter x:Key="NullToVis" xmlns:local="clr-namespace:SoundSwitcher.Pages" />
-        <local:NullToVisibilityConverter x:Key="NotNullToVis" Invert="True" xmlns:local="clr-namespace:SoundSwitcher.Pages" />
+        <converters:NullToVisibilityConverter x:Key="NullToVis" xmlns:converters="clr-namespace:SoundSwitcher.Converters" />
+        <converters:NullToVisibilityConverter x:Key="NotNullToVis" Invert="True" xmlns:converters="clr-namespace:SoundSwitcher.Converters" />
     </Page.Resources>
 
     <StackPanel Margin="0,18,0,10" behaviors:MarginSetter.Margin="15,0,15,5">

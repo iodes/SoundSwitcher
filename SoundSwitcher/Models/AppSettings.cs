@@ -33,7 +33,7 @@ public class AppSettings
     /// <summary>
     /// Whether to also switch the default communication device.
     /// </summary>
-    public bool SwitchCommunicationDevice { get; set; } = true;
+    public bool SwitchCommunicationDevice { get; set; } = false;
 
     /// <summary>
     /// Whether to show a notification when the profile is changed.

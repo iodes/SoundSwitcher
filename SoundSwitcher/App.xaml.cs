@@ -20,6 +20,11 @@ namespace SoundSwitcher;
 /// </summary>
 public partial class App
 {
+    // 알림 애니메이션 닫히는 타이밍에 장치 바꾸면 알림 오류
+    // 메인 창 카드 MinWidth 잡아서 애니메이션 글리치 수정
+    // 새로운 아이콘 구현해서 적용하기
+    // 컨버터 폴더 이동하기
+
     #region Fields
     private MainWindow _mainWindow = null!;
     private TaskbarIcon _taskbarIcon = null!;
