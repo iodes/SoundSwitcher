@@ -231,16 +231,16 @@ jobs:
         Set-Content -Path public/appcast.xml -Value $appcastXml
 
     - name: Setup Pages
-      uses: actions/configure-pages@v5
+      uses: actions/configure-pages@v6.0.0
 
     - name: Upload artifact
-      uses: actions/upload-pages-artifact@v4
+      uses: actions/upload-artifact@v7.0.1
       with:
         path: './public'
 
     - name: Deploy to GitHub Pages
       id: deployment
-      uses: actions/deploy-pages@v4
+      uses: actions/deploy-pages@v5.0.0
 
     - name: Write Job Summary
       run: |
@@ -249,8 +249,8 @@ jobs:
         echo "### :rocket: Release $version Published!" >> $env:GITHUB_STEP_SUMMARY
         echo "" >> $env:GITHUB_STEP_SUMMARY
         echo "#### :package: Package" >> $env:GITHUB_STEP_SUMMARY
-        echo "- **Portable**: ``SoundSwitcher-${version}-Portable.zip``" >> $env:GITHUB_STEP_SUMMARY
         echo "- **Installer**: ``SoundSwitcher-${version}-Setup.exe``" >> $env:GITHUB_STEP_SUMMARY
+        echo "- **Portable**: ``SoundSwitcher-${version}-Portable.zip``" >> $env:GITHUB_STEP_SUMMARY
         echo "" >> $env:GITHUB_STEP_SUMMARY
         echo "#### :globe_with_meridians: GitHub Pages" >> $env:GITHUB_STEP_SUMMARY
         echo "- **Appcast XML**: $baseUrl/appcast.xml" >> $env:GITHUB_STEP_SUMMARY
