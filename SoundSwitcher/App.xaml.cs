@@ -1,5 +1,4 @@
 using System.Drawing;
-using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using Hardcodet.Wpf.TaskbarNotification;
@@ -20,11 +19,6 @@ namespace SoundSwitcher;
 /// </summary>
 public partial class App
 {
-    // 알림 애니메이션 닫히는 타이밍에 장치 바꾸면 알림 오류
-    // 메인 창 카드 MinWidth 잡아서 애니메이션 글리치 수정
-    // 새로운 아이콘 구현해서 적용하기
-    // 컨버터 폴더 이동하기
-
     #region Fields
     private MainWindow _mainWindow = null!;
     private TaskbarIcon _taskbarIcon = null!;
@@ -34,8 +28,11 @@ public partial class App
 
     #region Static Services
     public static AudioDeviceService AudioService { get; private set; } = null!;
+
     public static SettingsService SettingsService { get; private set; } = null!;
+
     public static DeviceSwitchingService SwitchingService { get; private set; } = null!;
+
     public static MainViewModel ViewModel { get; private set; } = null!;
 
     /// <summary>
@@ -67,11 +64,11 @@ public partial class App
 
         // Initialise ViewModel
         ViewModel = new MainViewModel(AudioService, SettingsService, SwitchingService);
-        ViewModel.SettingsChanged += () => NotifySettingsChanged();
+        ViewModel.SettingsChanged += NotifySettingsChanged;
 
         AudioService.DevicesChanged += () =>
         {
-            Dispatcher.Invoke(() => UpdateTrayIcon());
+            Dispatcher.Invoke(UpdateTrayIcon);
         };
 
         InitializeUserInterface();
@@ -79,10 +76,7 @@ public partial class App
 
     private void App_OnExit(object sender, ExitEventArgs e)
     {
-        _mainWindow?.Close();
-
-        if (_taskbarIcon is null) return;
-
+        _mainWindow.Close();
         _taskbarIcon.IsEnabled = false;
         _taskbarIcon.Dispose();
     }
@@ -145,17 +139,15 @@ public partial class App
     #region Tray Icon
     private void OnTrayRightMouseUp(object sender, RoutedEventArgs e)
     {
-        NativeMethods.GetCursorPos(out var point);
+        global::Windows.Win32.PInvoke.GetCursorPos(out var point);
 
-        if (_mainWindow != null)
-        {
-            var helper = new System.Windows.Interop.WindowInteropHelper(_mainWindow);
-            NativeMethods.SetForegroundWindow(helper.EnsureHandle());
-        }
+        var helper = new System.Windows.Interop.WindowInteropHelper(_mainWindow);
+        _ = global::Windows.Win32.PInvoke.SetForegroundWindow(new Windows.Win32.Foundation.HWND(helper.EnsureHandle()));
 
-        double dpiX = 1.0;
-        double dpiY = 1.0;
-        using (var graphics = System.Drawing.Graphics.FromHwnd(IntPtr.Zero))
+        double dpiX;
+        double dpiY;
+
+        using (var graphics = Graphics.FromHwnd(IntPtr.Zero))
         {
             dpiX = graphics.DpiX / 96.0;
             dpiY = graphics.DpiY / 96.0;
@@ -170,23 +162,30 @@ public partial class App
     private void OnTrayPrimaryAction(object sender, RoutedEventArgs e)
     {
         var profileCount = ViewModel.Profiles.Count;
-        if (profileCount == 0)
-        {
-            ShowWithActivate();
-            return;
-        }
 
-        if (profileCount == 1)
+        switch (profileCount)
         {
-            var activeProfile = SwitchingService.GetCurrentActiveProfile();
-            if (activeProfile != null && activeProfile.Id == ViewModel.Profiles[0].Id)
-            {
+            case 0:
+                ShowWithActivate();
                 return;
+
+            case 1:
+            {
+                var activeProfile = SwitchingService.GetCurrentActiveProfile();
+
+                if (activeProfile != null && activeProfile.Id == ViewModel.Profiles[0].Id)
+                {
+                    return;
+                }
+
+                break;
             }
         }
 
         var switchedProfile = SwitchingService.SwitchToNextProfile();
-        if (switchedProfile == null) return;
+
+        if (switchedProfile == null)
+            return;
 
         UpdateTrayIcon();
         ShowProfileNotification(switchedProfile);
@@ -195,21 +194,25 @@ public partial class App
     private void ShowProfileNotification(Models.DeviceProfile profile)
     {
         var settings = SettingsService.Load();
-        if (!settings.ShowProfileChangeNotification) return;
+
+        if (!settings.ShowProfileChangeNotification)
+            return;
 
         string msg = "";
+
         if (profile.PlaybackDeviceId != null)
         {
             var pName = AudioService.GetDeviceName(profile.PlaybackDeviceId);
             if (!string.IsNullOrEmpty(pName)) msg += $"🔊 {pName}\n";
         }
+
         if (profile.CaptureDeviceId != null)
         {
             var cName = AudioService.GetDeviceName(profile.CaptureDeviceId);
             if (!string.IsNullOrEmpty(cName)) msg += $"🎤 {cName}";
         }
 
-        if (_currentNotification != null && !_currentNotification.IsClosed)
+        if (_currentNotification is { IsClosed: false })
         {
             // If an existing popup is open, update its content only (extend timer without resetting animation)
             _currentNotification.UpdateMessage(msg.TrimEnd());
@@ -217,8 +220,8 @@ public partial class App
         else
         {
             _taskbarIcon.CloseBalloon();
-            
-            _currentNotification = new ProfileChangeNotification(msg.TrimEnd(), () => 
+
+            _currentNotification = new ProfileChangeNotification(msg.TrimEnd(), () =>
             {
                 _taskbarIcon.CloseBalloon();
                 _currentNotification = null;
@@ -226,14 +229,13 @@ public partial class App
 
             // Apply margins based on Taskbar position to mimic native Windows 11 notification placement
             var tbPos = TaskbarHelper.GetTaskbarPosition();
-            if (tbPos == TaskbarPosition.Top) 
-                _currentNotification.Margin = new Thickness(0, 10, 10, 0);
-            else if (tbPos == TaskbarPosition.Left) 
-                _currentNotification.Margin = new Thickness(10, 0, 0, 10);
-            else if (tbPos == TaskbarPosition.Right) 
-                _currentNotification.Margin = new Thickness(0, 0, 10, 10);
-            else // Bottom or Unknown
-                _currentNotification.Margin = new Thickness(0, 0, 10, 10);
+
+            _currentNotification.Margin = tbPos switch
+            {
+                TaskbarPosition.Top => new Thickness(0, 10, 10, 0),
+                TaskbarPosition.Left => new Thickness(10, 0, 0, 10),
+                _ => new Thickness(0, 0, 10, 10)
+            };
 
             _taskbarIcon.ShowCustomBalloon(_currentNotification, System.Windows.Controls.Primitives.PopupAnimation.None, null);
         }
@@ -242,6 +244,7 @@ public partial class App
     private void UpdateTrayIcon()
     {
         var activeProfile = SwitchingService.GetCurrentActiveProfile();
+
         if (activeProfile == null)
         {
             _taskbarIcon.ToolTipText = "SoundSwitcher - 장치 없음";
@@ -251,11 +254,13 @@ public partial class App
         }
 
         string tooltip = "SoundSwitcher";
+
         if (activeProfile.PlaybackDeviceId != null)
         {
             var pName = AudioService.GetDeviceName(activeProfile.PlaybackDeviceId);
             if (!string.IsNullOrEmpty(pName)) tooltip += $"\n🔊 {pName}";
         }
+
         if (activeProfile.CaptureDeviceId != null)
         {
             var cName = AudioService.GetDeviceName(activeProfile.CaptureDeviceId);
@@ -266,6 +271,7 @@ public partial class App
 
         // Check if user enabled profile icon in tray
         var settings = SettingsService.Load();
+
         if (!settings.ShowProfileIconInTray)
         {
             _taskbarIcon.ClearValue(TaskbarIcon.IconSourceProperty);
@@ -298,6 +304,7 @@ public partial class App
 
         // Fallback to Native Device Icon
         var fallbackDevice = ViewModel.AvailablePlaybackDevices.FirstOrDefault(d => d.DeviceId == activeProfile.PlaybackDeviceId);
+
         if (fallbackDevice?.DeviceIcon != null)
         {
             _taskbarIcon.IconSource = fallbackDevice.DeviceIcon;
@@ -314,9 +321,11 @@ public partial class App
         try
         {
             var exePath = System.Diagnostics.Process.GetCurrentProcess().MainModule?.FileName;
+
             if (!string.IsNullOrEmpty(exePath))
             {
                 var extracted = Icon.ExtractAssociatedIcon(exePath);
+
                 if (extracted != null)
                     return extracted;
             }

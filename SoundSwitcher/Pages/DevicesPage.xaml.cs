@@ -17,19 +17,7 @@ public partial class DevicesPage : Page
         InitializeComponent();
     }
 
-    private void ProfileBorder_Loaded(object sender, RoutedEventArgs e)
-    {
-        if (sender is Border border && border.DataContext is ViewModels.DeviceProfileViewModel vm)
-        {
-            if (vm.IsNew)
-            {
-                if (border.Resources["LoadStoryboard"] is System.Windows.Media.Animation.Storyboard sb)
-                {
-                    sb.Begin(border);
-                }
-            }
-        }
-    }
+
 
     private void ProfileBorder_ContextMenuOpening(object sender, ContextMenuEventArgs e)
     {

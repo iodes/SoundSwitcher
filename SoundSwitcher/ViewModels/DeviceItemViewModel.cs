@@ -5,42 +5,33 @@ namespace SoundSwitcher.ViewModels;
 /// <summary>
 /// ViewModel for an individual item in the device list.
 /// </summary>
-public class DeviceItemViewModel : ViewModelBase
+public class DeviceItemViewModel(AudioDeviceInfo device) : ViewModelBase
 {
-    private bool _isPreferred;
-    private string? _customIconPath;
-    private int _orderIndex;
+    public string DeviceId { get; } = device.DeviceId;
 
-    public string DeviceId { get; }
-    public string Name { get; }
-    public AudioDeviceType DeviceType { get; }
-    public bool IsDefault { get; }
-    public bool IsDefaultCommunication { get; }
+    public string Name { get; } = device.Name;
+
+    public AudioDeviceType DeviceType { get; } = device.DeviceType;
+
+    public bool IsDefault { get; } = device.IsDefault;
+
+    public bool IsDefaultCommunication { get; } = device.IsDefaultCommunication;
 
     public bool IsPreferred
     {
-        get => _isPreferred;
-        set => SetProperty(ref _isPreferred, value);
+        get;
+        set => SetProperty(ref field, value);
     }
 
     public string? CustomIconPath
     {
-        get => _customIconPath;
-        set => SetProperty(ref _customIconPath, value);
+        get;
+        set => SetProperty(ref field, value);
     }
 
     public int OrderIndex
     {
-        get => _orderIndex;
-        set => SetProperty(ref _orderIndex, value);
-    }
-
-    public DeviceItemViewModel(AudioDeviceInfo device)
-    {
-        DeviceId = device.DeviceId;
-        Name = device.Name;
-        DeviceType = device.DeviceType;
-        IsDefault = device.IsDefault;
-        IsDefaultCommunication = device.IsDefaultCommunication;
+        get;
+        set => SetProperty(ref field, value);
     }
 }

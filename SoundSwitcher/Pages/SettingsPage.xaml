@@ -13,7 +13,7 @@
     mc:Ignorable="d">
 
     <Page.Resources>
-        <Style TargetType="controls:CardToggleSwitch" BasedOn="{StaticResource {x:Type ui:CardControl}}">
+        <Style BasedOn="{StaticResource {x:Type ui:CardControl}}" TargetType="controls:CardToggleSwitch">
             <Setter Property="behaviors:AnimatedPressBehavior.HoverBackground" Value="{DynamicResource ControlFillColorSecondaryBrush}" />
         </Style>
     </Page.Resources>

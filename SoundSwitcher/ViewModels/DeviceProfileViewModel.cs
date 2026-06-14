@@ -12,9 +12,6 @@ public class DeviceProfileViewModel : ViewModelBase
     private string? _playbackDeviceId;
     private string? _captureDeviceId;
     private string? _iconPath;
-    private bool _isFocused;
-    private bool _isActive;
-    private ImageSource? _fallbackDeviceIcon;
 
     public Guid Id => _profile.Id;
 
@@ -30,7 +27,7 @@ public class DeviceProfileViewModel : ViewModelBase
             {
                 _profile.PlaybackDeviceId = value;
                 OnPropertyChanged(nameof(DisplayName));
-                
+
                 if (IsActive)
                     DeviceApplyRequested?.Invoke(this);
 
@@ -52,7 +49,7 @@ public class DeviceProfileViewModel : ViewModelBase
                 bool wasActive = IsActive;
                 _profile.CaptureDeviceId = value;
                 OnPropertyChanged(nameof(DisplayName));
-                
+
                 if (wasActive && value != null)
                     DeviceApplyRequested?.Invoke(this);
 
@@ -80,7 +77,9 @@ public class DeviceProfileViewModel : ViewModelBase
         get
         {
             string? fullPath = IconCacheService.GetIconFullPath(_iconPath);
-            if (fullPath == null) return null;
+
+            if (fullPath == null)
+                return null;
 
             try
             {
@@ -113,44 +112,47 @@ public class DeviceProfileViewModel : ViewModelBase
     public DeviceProfile GetModel() => _profile;
 
     public event Action? ProfileChanged;
+
     public event Action<DeviceProfileViewModel>? DeleteRequested;
+
     public event Action<DeviceProfileViewModel>? DeviceApplyRequested;
 
     public ICommand DeleteCommand { get; }
+
     public ICommand ChangeIconCommand { get; }
+
     public ICommand ResetIconCommand { get; }
+
     public ICommand ApplyCommand { get; }
 
-    private bool _isDeleting;
     public bool IsDeleting
     {
-        get => _isDeleting;
-        set => SetProperty(ref _isDeleting, value);
+        get;
+        set => SetProperty(ref field, value);
     }
 
     public bool IsFocused
     {
-        get => _isFocused;
-        set => SetProperty(ref _isFocused, value);
+        get;
+        set => SetProperty(ref field, value);
     }
 
     public bool IsActive
     {
-        get => _isActive;
-        set => SetProperty(ref _isActive, value);
+        get;
+        set => SetProperty(ref field, value);
     }
 
     public ImageSource? FallbackDeviceIcon
     {
-        get => _fallbackDeviceIcon;
-        set => SetProperty(ref _fallbackDeviceIcon, value);
+        get;
+        set => SetProperty(ref field, value);
     }
 
-    private bool _isNew;
     public bool IsNew
     {
-        get => _isNew;
-        set => SetProperty(ref _isNew, value);
+        get;
+        set => SetProperty(ref field, value);
     }
 
     public DeviceProfileViewModel(DeviceProfile profile, bool isNew = false)
@@ -162,15 +164,23 @@ public class DeviceProfileViewModel : ViewModelBase
         {
             Task.Delay(400).ContinueWith(_ => IsNew = false);
         }
+
         _playbackDeviceId = profile.PlaybackDeviceId;
         _captureDeviceId = profile.CaptureDeviceId;
         _iconPath = profile.IconPath;
 
-        DeleteCommand = new RelayCommand(async () => 
+        DeleteCommand = new RelayCommand(async void () =>
         {
-            IsDeleting = true;
-            await Task.Delay(350);
-            DeleteRequested?.Invoke(this);
+            try
+            {
+                IsDeleting = true;
+                await Task.Delay(350);
+                DeleteRequested?.Invoke(this);
+            }
+            catch
+            {
+                // ignored
+            }
         });
 
         ChangeIconCommand = new RelayCommand(() =>

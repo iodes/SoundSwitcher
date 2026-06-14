@@ -8,14 +8,17 @@ public class NullToVisibilityConverter : IValueConverter
 {
     public bool Invert { get; set; } = false;
 
-    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
         bool isNull = value == null || (value is string s && string.IsNullOrEmpty(s));
         if (Invert) isNull = !isNull;
-        return isNull ? Visibility.Visible : Visibility.Collapsed;
+
+        return isNull
+            ? Visibility.Visible
+            : Visibility.Collapsed;
     }
 
-    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
         throw new NotImplementedException();
     }

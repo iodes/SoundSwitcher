@@ -1,6 +1,6 @@
-using System;
-using System.Linq;
 using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
@@ -17,6 +17,7 @@ public static class AnimatedPressBehavior
             new PropertyMetadata(false, OnIsEnabledChanged));
 
     public static bool GetIsEnabled(DependencyObject obj) => (bool)obj.GetValue(IsEnabledProperty);
+
     public static void SetIsEnabled(DependencyObject obj, bool value) => obj.SetValue(IsEnabledProperty, value);
 
     public static readonly DependencyProperty IgnorePressProperty =
@@ -27,6 +28,7 @@ public static class AnimatedPressBehavior
             new PropertyMetadata(false));
 
     public static bool GetIgnorePress(DependencyObject obj) => (bool)obj.GetValue(IgnorePressProperty);
+
     public static void SetIgnorePress(DependencyObject obj, bool value) => obj.SetValue(IgnorePressProperty, value);
 
     public static readonly DependencyProperty HoverBackgroundProperty =
@@ -37,6 +39,7 @@ public static class AnimatedPressBehavior
             new PropertyMetadata(null));
 
     public static Brush GetHoverBackground(DependencyObject obj) => (Brush)obj.GetValue(HoverBackgroundProperty);
+
     public static void SetHoverBackground(DependencyObject obj, Brush value) => obj.SetValue(HoverBackgroundProperty, value);
 
     private static void OnIsEnabledChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
@@ -62,13 +65,10 @@ public static class AnimatedPressBehavior
 
     private static void Element_MouseEnter(object sender, MouseEventArgs e)
     {
-        if (sender is System.Windows.Controls.Control control)
+        if (sender is Control control)
         {
             var hoverBrush = GetHoverBackground(control);
-            if (hoverBrush != null)
-            {
-                control.SetCurrentValue(System.Windows.Controls.Control.BackgroundProperty, hoverBrush);
-            }
+            control.SetCurrentValue(Control.BackgroundProperty, hoverBrush);
         }
     }
 
@@ -85,31 +85,27 @@ public static class AnimatedPressBehavior
 
     private static bool ShouldIgnorePress(DependencyObject? originalSource, DependencyObject rootElement)
     {
-        DependencyObject? current = originalSource;
+        var current = originalSource;
+
         while (current != null && current != rootElement)
         {
             if (GetIgnorePress(current))
-            {
                 return true;
-            }
 
             // Automatically ignore presses originating from inner interactive controls
-            if (current is System.Windows.Controls.Primitives.ButtonBase ||
-                current is System.Windows.Controls.Primitives.TextBoxBase ||
-                current is System.Windows.Controls.ComboBox ||
-                current is System.Windows.Controls.Primitives.Thumb ||
-                current is System.Windows.Controls.Slider)
-            {
+            if (current is ButtonBase or TextBoxBase or ComboBox or Thumb or Slider)
                 return true;
-            }
 
-            DependencyObject? parent = VisualTreeHelper.GetParent(current);
+            var parent = VisualTreeHelper.GetParent(current);
+
             if (parent == null && current is FrameworkElement element)
             {
                 parent = element.Parent;
             }
+
             current = parent;
         }
+
         return false;
     }
 
@@ -127,9 +123,9 @@ public static class AnimatedPressBehavior
         {
             AnimateScale(element, 1.0);
 
-            if (element is System.Windows.Controls.Control control && GetHoverBackground(control) != null)
+            if (element is Control control)
             {
-                control.SetCurrentValue(System.Windows.Controls.Control.BackgroundProperty, DependencyProperty.UnsetValue);
+                control.SetCurrentValue(Control.BackgroundProperty, DependencyProperty.UnsetValue);
             }
         }
     }
@@ -153,17 +149,23 @@ public static class AnimatedPressBehavior
 
         ScaleTransform? scaleTransform = null;
 
-        if (element.RenderTransform is ScaleTransform st)
+        switch (element.RenderTransform)
         {
-            scaleTransform = st;
-        }
-        else if (element.RenderTransform is TransformGroup group)
-        {
-            scaleTransform = group.Children.OfType<ScaleTransform>().FirstOrDefault();
-            if (scaleTransform == null)
+            case ScaleTransform st:
+                scaleTransform = st;
+                break;
+
+            case TransformGroup group:
             {
-                scaleTransform = new ScaleTransform(1, 1);
-                group.Children.Add(scaleTransform);
+                scaleTransform = group.Children.OfType<ScaleTransform>().FirstOrDefault();
+
+                if (scaleTransform == null)
+                {
+                    scaleTransform = new ScaleTransform(1, 1);
+                    group.Children.Add(scaleTransform);
+                }
+
+                break;
             }
         }
 
@@ -175,6 +177,7 @@ public static class AnimatedPressBehavior
                 Duration = TimeSpan.FromMilliseconds(100),
                 EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
             };
+
             scaleTransform.BeginAnimation(ScaleTransform.ScaleXProperty, anim);
             scaleTransform.BeginAnimation(ScaleTransform.ScaleYProperty, anim);
         }

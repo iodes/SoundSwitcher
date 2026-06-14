@@ -2,3 +2,6 @@ GetWindowLong
 SetWindowLong
 SHDefExtractIcon
 DestroyIcon
+WINDOW_EX_STYLE
+GetCursorPos
+SetForegroundWindow

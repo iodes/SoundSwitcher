@@ -1,4 +1,3 @@
-using System;
 using System.Windows;
 using Wpf.Ui.Controls;
 
@@ -60,9 +59,11 @@ public class CardToggleSwitch : CardControl
         if (e.OriginalSource is DependencyObject dObj)
         {
             var parent = dObj;
+
             while (parent != null)
             {
                 if (parent == _toggleSwitch) return;
+
                 parent = System.Windows.Media.VisualTreeHelper.GetParent(parent) ?? (parent as FrameworkElement)?.Parent;
             }
         }

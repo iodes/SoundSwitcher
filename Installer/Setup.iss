@@ -2,7 +2,7 @@
 #include "CodeDependencies.iss"
 
 #define MyAppName "SoundSwitcher"
-#define MyAppVersion "1.2.0.0"
+#define MyAppVersion "1.0.0.0"
 #define MyAppPublisher "Kodnix"
 #define MyAppURL "https://github.com/iodes/SoundSwitcher"
 #define MyAppExeName "SoundSwitcher.exe"
@@ -58,7 +58,7 @@ begin
 end;
 
 [Files]
-Source: "..\SoundSwitcher\bin\Release\net8.0-windows\publish\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs; BeforeInstall: TaskKill('{#MyAppExeName}')
+Source: "..\SoundSwitcher\bin\Release\net10.0-windows\publish\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs; BeforeInstall: TaskKill('{#MyAppExeName}')
 
 [UninstallDelete]
 Type: filesandordirs; Name: "{userappdata}\{#MyAppName}"

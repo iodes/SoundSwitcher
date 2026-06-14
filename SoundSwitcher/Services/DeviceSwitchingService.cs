@@ -21,9 +21,11 @@ public class DeviceSwitchingService
     private void OnDevicesChanged()
     {
         var settings = _settingsService.Load();
+
         if (settings.LastSelectedProfileId != null)
         {
             var activeProfile = GetCurrentActiveProfile();
+
             if (activeProfile == null)
             {
                 settings.LastSelectedProfileId = null;
@@ -39,15 +41,16 @@ public class DeviceSwitchingService
     public DeviceProfile? SwitchToNextProfile()
     {
         var settings = _settingsService.Load();
-        var profiles = settings.DeviceProfiles;
+        List<DeviceProfile> profiles = settings.DeviceProfiles;
 
-        if (profiles.Count == 0)
-            return null;
-
-        if (profiles.Count == 1)
+        switch (profiles.Count)
         {
-            SwitchToProfile(profiles[0]);
-            return profiles[0];
+            case 0:
+                return null;
+
+            case 1:
+                SwitchToProfile(profiles[0]);
+                return profiles[0];
         }
 
         // Try to find the current active profile
@@ -110,12 +113,12 @@ public class DeviceSwitchingService
     public DeviceProfile? GetCurrentActiveProfile()
     {
         var settings = _settingsService.Load();
-        var profiles = settings.DeviceProfiles;
+        List<DeviceProfile> profiles = settings.DeviceProfiles;
 
         var currentPlayback = _audioService.GetDefaultDevice(NAudio.CoreAudioApi.DataFlow.Render);
         var currentCapture = _audioService.GetDefaultDevice(NAudio.CoreAudioApi.DataFlow.Capture);
 
-        var matchingProfiles = profiles.Where(p => 
+        List<DeviceProfile> matchingProfiles = profiles.Where(p =>
             (p.PlaybackDeviceId == null || p.PlaybackDeviceId == currentPlayback?.ID) &&
             (p.CaptureDeviceId == null || p.CaptureDeviceId == currentCapture?.ID) &&
             (p.PlaybackDeviceId != null || p.CaptureDeviceId != null)).ToList();
@@ -126,6 +129,7 @@ public class DeviceSwitchingService
         if (settings.LastSelectedProfileId != null)
         {
             var lastApplied = matchingProfiles.FirstOrDefault(p => p.Id == settings.LastSelectedProfileId);
+
             if (lastApplied != null)
             {
                 return lastApplied;

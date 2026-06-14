@@ -22,9 +22,7 @@
                         FontSize="13"
                         FontWeight="Medium"
                         Text="프로그램 버전" />
-                    <TextBlock
-                        FontSize="12"
-                        Text="{Binding AppVersion}" />
+                    <TextBlock FontSize="12" Text="{Binding AppVersion}" />
                 </StackPanel>
             </ui:CardControl.Header>
         </ui:CardControl>
@@ -41,8 +39,8 @@
                         Text="설명" />
                     <TextBlock
                         FontSize="12"
-                        TextWrapping="Wrap"
-                        Text="시스템 트레이에서 클릭 한 번으로 오디오 장치를 빠르게 전환하는 유틸리티입니다." />
+                        Text="시스템 트레이에서 클릭 한 번으로 오디오 장치를 빠르게 전환하는 유틸리티입니다."
+                        TextWrapping="Wrap" />
                 </StackPanel>
             </ui:CardControl.Header>
         </ui:CardControl>
@@ -57,9 +55,7 @@
                         FontSize="13"
                         FontWeight="Medium"
                         Text="기술 스택" />
-                    <TextBlock
-                        FontSize="12"
-                        Text=".NET 10 · WPF · WPF-UI · NAudio" />
+                    <TextBlock FontSize="12" Text=".NET 10 · WPF · WPF-UI · NAudio" />
                 </StackPanel>
             </ui:CardControl.Header>
         </ui:CardControl>

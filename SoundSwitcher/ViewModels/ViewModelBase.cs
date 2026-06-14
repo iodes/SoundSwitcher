@@ -3,9 +3,6 @@ using System.Runtime.CompilerServices;
 
 namespace SoundSwitcher.ViewModels;
 
-/// <summary>
-/// INotifyPropertyChanged를 구현하는 ViewModel 기본 클래스.
-/// </summary>
 public abstract class ViewModelBase : INotifyPropertyChanged
 {
     public event PropertyChangedEventHandler? PropertyChanged;

@@ -9,9 +9,7 @@ namespace SoundSwitcher.Services;
 /// </summary>
 public class SettingsService
 {
-    private static readonly string SettingsFolder = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-        "SoundSwitcher");
+    private static readonly string SettingsFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "SoundSwitcher");
 
     private static readonly string SettingsFilePath = Path.Combine(SettingsFolder, "settings.json");
 

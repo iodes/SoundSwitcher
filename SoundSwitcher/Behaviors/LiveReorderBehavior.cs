@@ -1,13 +1,9 @@
-#nullable enable
-using System;
 using System.Collections;
-using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
-using System.Windows.Media.Effects;
 
 namespace SoundSwitcher.Behaviors
 {
@@ -17,6 +13,7 @@ namespace SoundSwitcher.Behaviors
             DependencyProperty.RegisterAttached("IsReorderGrip", typeof(bool), typeof(LiveReorderBehavior), new PropertyMetadata(false, OnIsReorderGripChanged));
 
         public static bool GetIsReorderGrip(DependencyObject obj) => (bool)obj.GetValue(IsReorderGripProperty);
+
         public static void SetIsReorderGrip(DependencyObject obj, bool value) => obj.SetValue(IsReorderGripProperty, value);
 
         private static FrameworkElement? _draggedItem;
@@ -52,8 +49,9 @@ namespace SoundSwitcher.Behaviors
         {
             if (sender is FrameworkElement grip)
             {
-                _draggedItem = FindAncestor<ContentPresenter>(grip) as FrameworkElement 
-                               ?? FindAncestor<ListBoxItem>(grip) as FrameworkElement;
+                _draggedItem = FindAncestor<ContentPresenter>(grip) as FrameworkElement
+                               ?? FindAncestor<ListBoxItem>(grip);
+
                 _itemsControl = FindAncestor<ItemsControl>(grip);
 
                 if (_draggedItem != null && _itemsControl != null)
@@ -63,8 +61,9 @@ namespace SoundSwitcher.Behaviors
 
                     _currentIndex = _originalIndex;
                     _startMousePos = e.GetPosition(_itemsControl);
-                    
-                    _containers = new List<FrameworkElement>();
+
+                    _containers = [];
+
                     for (int i = 0; i < _itemsControl.Items.Count; i++)
                     {
                         if (_itemsControl.ItemContainerGenerator.ContainerFromIndex(i) is FrameworkElement container)
@@ -80,7 +79,7 @@ namespace SoundSwitcher.Behaviors
                         scale.BeginAnimation(ScaleTransform.ScaleYProperty, new DoubleAnimation(1.02, TimeSpan.FromSeconds(0.2)) { EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut } });
                     }
 
-                    if (_itemsControl.DataContext is SoundSwitcher.ViewModels.MainViewModel mainViewModel)
+                    if (_itemsControl.DataContext is ViewModels.MainViewModel mainViewModel)
                     {
                         mainViewModel.IsReordering = true;
                     }
@@ -93,15 +92,14 @@ namespace SoundSwitcher.Behaviors
 
         private static void Element_MouseMove(object sender, MouseEventArgs e)
         {
-            if (_draggedItem != null && _itemsControl != null && _containers != null && Mouse.Captured == sender as UIElement)
+            if (_draggedItem != null && _itemsControl != null && _containers != null && Mouse.Captured?.Equals(sender as UIElement) == true)
             {
-                Point currentMousePos = e.GetPosition(_itemsControl);
+                var currentMousePos = e.GetPosition(_itemsControl);
                 double deltaY = currentMousePos.Y - _startMousePos.Y;
 
                 SetTranslateY(_draggedItem, deltaY, 0);
 
-                double offset = deltaY;
-                int steps = (int)Math.Round(offset / _draggedItem.ActualHeight);
+                int steps = (int)Math.Round(deltaY / _draggedItem.ActualHeight);
                 int newIndex = _originalIndex + steps;
                 newIndex = Math.Max(0, Math.Min(newIndex, _containers.Count - 1));
 
@@ -122,6 +120,7 @@ namespace SoundSwitcher.Behaviors
                 if (i == _originalIndex) continue;
 
                 double targetY = 0;
+
                 if (_currentIndex < _originalIndex)
                 {
                     if (i >= _currentIndex && i < _originalIndex)
@@ -139,31 +138,36 @@ namespace SoundSwitcher.Behaviors
 
         private static TTransform GetOrCreateTransform<TTransform>(FrameworkElement child) where TTransform : Transform, new()
         {
-            if (child.RenderTransform != null && child.RenderTransform.IsFrozen)
+            if (child.RenderTransform is { IsFrozen: true })
             {
                 child.RenderTransform = child.RenderTransform.Clone();
             }
 
-            if (child.RenderTransform is TTransform single)
-                return single;
-
-            if (child.RenderTransform is TransformGroup group)
+            switch (child.RenderTransform)
             {
-                foreach (var t in group.Children)
+                case TTransform single:
+                    return single;
+
+                case TransformGroup group:
                 {
-                    if (t is TTransform found) return found;
+                    foreach (var t in group.Children)
+                    {
+                        if (t is TTransform found) return found;
+                    }
+
+                    var newTransform = new TTransform();
+                    group.Children.Add(newTransform);
+                    return newTransform;
                 }
-                
-                var newTransform = new TTransform();
-                group.Children.Add(newTransform);
-                return newTransform;
             }
-            
+
             var newGroup = new TransformGroup();
+
             if (child.RenderTransform != null && child.RenderTransform != Transform.Identity)
             {
                 newGroup.Children.Add(child.RenderTransform);
             }
+
             var targetTransform = new TTransform();
             newGroup.Children.Add(targetTransform);
             child.RenderTransform = newGroup;
@@ -185,6 +189,7 @@ namespace SoundSwitcher.Behaviors
                         Duration = TimeSpan.FromSeconds(durationSeconds),
                         EasingFunction = new CubicEase { EasingMode = EasingMode.EaseInOut }
                     };
+
                     transform.BeginAnimation(TranslateTransform.YProperty, anim);
                 }
                 else
@@ -208,18 +213,19 @@ namespace SoundSwitcher.Behaviors
         private static void FinishDrag(UIElement? grip)
         {
             if (_draggedItem == null || _isFinishing) return;
+
             _isFinishing = true;
 
             try
             {
-                if (grip != null) grip.ReleaseMouseCapture();
+                grip?.ReleaseMouseCapture();
 
                 var item = _draggedItem;
-                var containers = _containers;
+                List<FrameworkElement>? containers = _containers;
                 var itemsControl = _itemsControl;
 
                 Panel.SetZIndex(item, 0);
-                
+
                 if (VisualTreeHelper.GetChildrenCount(item) > 0 && VisualTreeHelper.GetChild(item, 0) is FrameworkElement child)
                 {
                     var scale = GetOrCreateTransform<ScaleTransform>(child);
@@ -239,9 +245,10 @@ namespace SoundSwitcher.Behaviors
                 {
                     var source = itemsControl.ItemsSource;
                     var moveMethod = source?.GetType().GetMethod("Move");
+
                     if (moveMethod != null)
                     {
-                        moveMethod.Invoke(source, new object[] { _originalIndex, _currentIndex });
+                        moveMethod.Invoke(source, [_originalIndex, _currentIndex]);
                     }
                     else if (source is IList list)
                     {
@@ -253,7 +260,7 @@ namespace SoundSwitcher.Behaviors
             }
             finally
             {
-                if (_itemsControl?.DataContext is SoundSwitcher.ViewModels.MainViewModel mainViewModel)
+                if (_itemsControl?.DataContext is ViewModels.MainViewModel mainViewModel)
                 {
                     mainViewModel.IsReordering = false;
                 }
@@ -270,8 +277,10 @@ namespace SoundSwitcher.Behaviors
             while (current != null)
             {
                 if (current is T t) return t;
+
                 current = VisualTreeHelper.GetParent(current);
             }
+
             return null;
         }
     }

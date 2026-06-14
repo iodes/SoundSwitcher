@@ -37,7 +37,12 @@ public class AudioDeviceService : IMMNotificationClient
         foreach (var device in _enumerator.EnumerateAudioEndPoints(DataFlow.Render, DeviceState.Active))
         {
             string? iconPath = null;
-            try { iconPath = device.Properties[iconPropertyKey].Value as string; } catch { }
+
+            try { iconPath = device.Properties[iconPropertyKey].Value as string; }
+            catch
+            {
+                // ignored
+            }
 
             devices.Add(new AudioDeviceInfo
             {
@@ -57,7 +62,12 @@ public class AudioDeviceService : IMMNotificationClient
         foreach (var device in _enumerator.EnumerateAudioEndPoints(DataFlow.Capture, DeviceState.Active))
         {
             string? iconPath = null;
-            try { iconPath = device.Properties[iconPropertyKey].Value as string; } catch { }
+
+            try { iconPath = device.Properties[iconPropertyKey].Value as string; }
+            catch
+            {
+                // ignored
+            }
 
             devices.Add(new AudioDeviceInfo
             {
@@ -110,7 +120,13 @@ public class AudioDeviceService : IMMNotificationClient
     /// <param name="alsoSetCommunication">Whether to also set as the communication device.</param>
     public void SetDefaultDevice(string deviceId, bool alsoSetCommunication = true)
     {
-        var policyConfig = (IPolicyConfig)new PolicyConfigClient();
+        var clsid = new Guid("870AF99C-171D-4F9E-AF0D-E63DF40C2BC9");
+        var type = Type.GetTypeFromCLSID(clsid)!;
+        var comObject = Activator.CreateInstance(type)!;
+
+        var wrappers = new System.Runtime.InteropServices.Marshalling.StrategyBasedComWrappers();
+        var ptr = Marshal.GetIUnknownForObject(comObject);
+        var policyConfig = (IPolicyConfig)wrappers.GetOrCreateObjectForComInstance(ptr, CreateObjectFlags.None);
 
         // Set as default console/multimedia device
         policyConfig.SetDefaultEndpoint(deviceId, ERole.eConsole);

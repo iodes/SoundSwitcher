@@ -1,27 +1,17 @@
-using System;
 using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Threading;
-using System.Runtime.InteropServices;
 using System.Windows.Interop;
 
 namespace SoundSwitcher.Controls;
 
-public partial class ProfileChangeNotification : UserControl
+public partial class ProfileChangeNotification
 {
     private DispatcherTimer? _closeTimer;
-    private Action _onCloseAction;
-    private bool _isClosing = false;
+    private readonly Action _onCloseAction;
 
-    public bool IsClosed => _isClosing;
-
-    #region P/Invoke for Click-Through
-    private const int GWL_EXSTYLE = -20;
-    private const int WS_EX_TRANSPARENT = 0x00000020;
-    private const int WS_EX_LAYERED = 0x00080000;
-    #endregion
+    public bool IsClosed { get; private set; }
 
     public ProfileChangeNotification(string message, Action onCloseAction)
     {
@@ -37,23 +27,23 @@ public partial class ProfileChangeNotification : UserControl
         // Apply Click-Through at the OS level (using deferred execution to ensure HWND is available)
         Dispatcher.BeginInvoke(new Action(() =>
         {
-            var hwndSource = PresentationSource.FromVisual(this) as HwndSource;
-            if (hwndSource != null)
+            if (PresentationSource.FromVisual(this) is HwndSource hwndSource)
             {
                 var hwnd = new Windows.Win32.Foundation.HWND(hwndSource.Handle);
                 int exStyle = Windows.Win32.PInvoke.GetWindowLong(hwnd, Windows.Win32.UI.WindowsAndMessaging.WINDOW_LONG_PTR_INDEX.GWL_EXSTYLE);
-                Windows.Win32.PInvoke.SetWindowLong(hwnd, Windows.Win32.UI.WindowsAndMessaging.WINDOW_LONG_PTR_INDEX.GWL_EXSTYLE, exStyle | WS_EX_TRANSPARENT | WS_EX_LAYERED);
+                _ = Windows.Win32.PInvoke.SetWindowLong(hwnd, Windows.Win32.UI.WindowsAndMessaging.WINDOW_LONG_PTR_INDEX.GWL_EXSTYLE, exStyle | (int)Windows.Win32.UI.WindowsAndMessaging.WINDOW_EX_STYLE.WS_EX_TRANSPARENT | (int)Windows.Win32.UI.WindowsAndMessaging.WINDOW_EX_STYLE.WS_EX_LAYERED);
             }
         }), DispatcherPriority.Loaded);
 
         // Start Fade-in
         var fadeIn = new DoubleAnimation(0.0, 1.0, new Duration(TimeSpan.FromSeconds(0.2)));
-        RootBorder.BeginAnimation(UIElement.OpacityProperty, fadeIn);
+        RootBorder.BeginAnimation(OpacityProperty, fadeIn);
 
         var moveAnim = new DoubleAnimation(20.0, 0.0, new Duration(TimeSpan.FromSeconds(0.3)))
         {
             EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
         };
+
         if (RootBorder.RenderTransform is TranslateTransform transform)
         {
             transform.BeginAnimation(TranslateTransform.YProperty, moveAnim);
@@ -64,6 +54,7 @@ public partial class ProfileChangeNotification : UserControl
         {
             Interval = TimeSpan.FromSeconds(1.5)
         };
+
         _closeTimer.Tick += CloseTimer_Tick;
         _closeTimer.Start();
     }
@@ -77,10 +68,10 @@ public partial class ProfileChangeNotification : UserControl
     {
         MessageText.Text = message;
 
-        if (_isClosing)
+        if (IsClosed)
         {
-            _isClosing = false;
-            RootBorder.BeginAnimation(UIElement.OpacityProperty, null);
+            IsClosed = false;
+            RootBorder.BeginAnimation(OpacityProperty, null);
             RootBorder.Opacity = 1.0;
         }
 
@@ -91,13 +82,15 @@ public partial class ProfileChangeNotification : UserControl
 
     public void Close()
     {
-        if (_isClosing) return;
-        _isClosing = true;
+        if (IsClosed)
+            return;
+
+        IsClosed = true;
 
         _closeTimer?.Stop();
 
         var fadeOut = new DoubleAnimation(1.0, 0.0, new Duration(TimeSpan.FromSeconds(0.15)));
-        fadeOut.Completed += (s, ev) => _onCloseAction?.Invoke();
-        RootBorder.BeginAnimation(UIElement.OpacityProperty, fadeOut);
+        fadeOut.Completed += (_, _) => _onCloseAction.Invoke();
+        RootBorder.BeginAnimation(OpacityProperty, fadeOut);
     }
 }

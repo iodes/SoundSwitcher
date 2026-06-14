@@ -13,12 +13,12 @@ public enum TaskbarPosition
     Unknown = 4
 }
 
-public static class TaskbarHelper
+public static partial class TaskbarHelper
 {
     private const int ABM_GETTASKBARPOS = 0x00000005;
 
-    [DllImport("shell32.dll", SetLastError = true)]
-    private static extern IntPtr SHAppBarMessage(int dwMessage, ref APPBARDATA pData);
+    [LibraryImport("shell32.dll", SetLastError = true)]
+    private static partial IntPtr SHAppBarMessage(int dwMessage, ref APPBARDATA pData);
 
     [StructLayout(LayoutKind.Sequential)]
     private struct APPBARDATA
@@ -43,9 +43,10 @@ public static class TaskbarHelper
     public static TaskbarPosition GetTaskbarPosition()
     {
         APPBARDATA data = new APPBARDATA();
-        data.cbSize = Marshal.SizeOf(typeof(APPBARDATA));
+        data.cbSize = Marshal.SizeOf<APPBARDATA>();
 
         IntPtr result = SHAppBarMessage(ABM_GETTASKBARPOS, ref data);
+
         if (result != IntPtr.Zero)
         {
             return (TaskbarPosition)data.uEdge;
@@ -54,8 +55,9 @@ public static class TaskbarHelper
         // Fallback
         if (SystemParameters.WorkArea.Top > 0) return TaskbarPosition.Top;
         if (SystemParameters.WorkArea.Left > 0) return TaskbarPosition.Left;
-        if (SystemParameters.WorkArea.Right < SystemParameters.PrimaryScreenWidth) return TaskbarPosition.Right;
-        
-        return TaskbarPosition.Bottom;
+
+        return SystemParameters.WorkArea.Right < SystemParameters.PrimaryScreenWidth
+            ? TaskbarPosition.Right
+            : TaskbarPosition.Bottom;
     }
 }

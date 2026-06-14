@@ -1,8 +1,8 @@
 using SoundSwitcher.Models;
 using SoundSwitcher.Services;
 using System.Collections.ObjectModel;
+using System.Reflection;
 using System.Windows.Input;
-using System.Windows.Threading;
 
 namespace SoundSwitcher.ViewModels;
 
@@ -19,11 +19,11 @@ public class MainViewModel : ViewModelBase
     private bool _runAtStartup;
     private bool _showProfileIconInTray;
     private bool _showProfileChangeNotification;
-    private Guid? _focusedProfileId;
-    private bool _isReordering;
 
     public ObservableCollection<DeviceProfileViewModel> Profiles { get; } = [];
+
     public ObservableCollection<AudioDeviceInfo> AvailablePlaybackDevices { get; } = [];
+
     public ObservableCollection<AudioDeviceInfo> AvailableCaptureDevices { get; } = [];
 
     public bool SwitchCommunicationDevice
@@ -71,10 +71,10 @@ public class MainViewModel : ViewModelBase
 
     public Guid? FocusedProfileId
     {
-        get => _focusedProfileId;
+        get;
         set
         {
-            if (SetProperty(ref _focusedProfileId, value))
+            if (SetProperty(ref field, value))
             {
                 foreach (var profile in Profiles)
                 {
@@ -86,14 +86,14 @@ public class MainViewModel : ViewModelBase
 
     public bool IsReordering
     {
-        get => _isReordering;
-        set => SetProperty(ref _isReordering, value);
+        get;
+        set => SetProperty(ref field, value);
     }
 
-    public string AppVersion =>
-        $"v{System.Reflection.Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "1.0.0"}";
+    public string AppVersion => $"v{Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "1.0.0"}";
 
     public ICommand AddProfileCommand { get; }
+
     public ICommand ClearFocusCommand { get; }
 
     /// <summary>
@@ -118,10 +118,7 @@ public class MainViewModel : ViewModelBase
         // Auto-refresh when devices change
         _audioService.DevicesChanged += () =>
         {
-            System.Windows.Application.Current.Dispatcher.Invoke(() =>
-            {
-                RefreshDevices();
-            });
+            System.Windows.Application.Current.Dispatcher.Invoke(RefreshDevices);
         };
     }
 
@@ -134,9 +131,9 @@ public class MainViewModel : ViewModelBase
         _showProfileChangeNotification = settings.ShowProfileChangeNotification;
 
         Profiles.Clear();
-        foreach (var profile in settings.DeviceProfiles)
+
+        foreach (var pvm in settings.DeviceProfiles.Select(profile => new DeviceProfileViewModel(profile, isNew: false)))
         {
-            var pvm = new DeviceProfileViewModel(profile, isNew: false);
             pvm.ProfileChanged += SaveSettings;
             pvm.DeleteRequested += OnProfileDeleteRequested;
             pvm.DeviceApplyRequested += OnProfileApplyRequested;
@@ -146,10 +143,9 @@ public class MainViewModel : ViewModelBase
 
     public void RefreshDevices()
     {
-        var devices = _audioService.GetActiveDevices();
-
-        var currentPlayback = devices.Where(d => d.DeviceType == AudioDeviceType.Playback).OrderBy(d => d.Name).ToList();
-        var currentCapture = devices.Where(d => d.DeviceType == AudioDeviceType.Capture).OrderBy(d => d.Name).ToList();
+        List<AudioDeviceInfo> devices = _audioService.GetActiveDevices();
+        List<AudioDeviceInfo> currentPlayback = devices.Where(d => d.DeviceType == AudioDeviceType.Playback).OrderBy(d => d.Name).ToList();
+        List<AudioDeviceInfo> currentCapture = devices.Where(d => d.DeviceType == AudioDeviceType.Capture).OrderBy(d => d.Name).ToList();
 
         SyncCollection(AvailablePlaybackDevices, currentPlayback);
         SyncCollection(AvailableCaptureDevices, currentCapture);
@@ -159,7 +155,7 @@ public class MainViewModel : ViewModelBase
         foreach (var profile in Profiles)
         {
             profile.IsActive = activeProfileModel != null && profile.Id == activeProfileModel.Id;
-            
+
             var playbackDevice = AvailablePlaybackDevices.FirstOrDefault(d => d.DeviceId == profile.PlaybackDeviceId);
             profile.FallbackDeviceIcon = playbackDevice?.DeviceIcon;
         }
@@ -170,7 +166,7 @@ public class MainViewModel : ViewModelBase
         // Remove items not in source
         for (int i = target.Count - 1; i >= 0; i--)
         {
-            if (!source.Any(d => d.DeviceId == target[i].DeviceId))
+            if (source.All(d => d.DeviceId != target[i].DeviceId))
             {
                 target.RemoveAt(i);
             }
@@ -181,6 +177,7 @@ public class MainViewModel : ViewModelBase
         {
             var item = source[i];
             var existing = target.FirstOrDefault(d => d.DeviceId == item.DeviceId);
+
             if (existing == null)
             {
                 target.Insert(i, item);
@@ -188,6 +185,7 @@ public class MainViewModel : ViewModelBase
             else
             {
                 int oldIndex = target.IndexOf(existing);
+
                 if (oldIndex != i)
                 {
                     target.Move(oldIndex, i);
@@ -209,6 +207,7 @@ public class MainViewModel : ViewModelBase
         {
             newProfile.PlaybackDeviceId = AvailablePlaybackDevices[0].DeviceId;
         }
+
         if (AvailableCaptureDevices.Count > 0)
         {
             newProfile.CaptureDeviceId = AvailableCaptureDevices[0].DeviceId;
@@ -236,6 +235,7 @@ public class MainViewModel : ViewModelBase
         Profiles.Remove(pvm);
 
         var oldSettings = _settingsService.Load();
+
         if (oldSettings.LastSelectedProfileId == pvm.Id)
         {
             oldSettings.LastSelectedProfileId = null;
@@ -252,11 +252,8 @@ public class MainViewModel : ViewModelBase
         var currentPlayback = _audioService.GetDefaultDevice(NAudio.CoreAudioApi.DataFlow.Render)?.ID;
         var currentCapture = _audioService.GetDefaultDevice(NAudio.CoreAudioApi.DataFlow.Capture)?.ID;
 
-        bool needsSwitch = false;
-        if (model.PlaybackDeviceId != null && model.PlaybackDeviceId != currentPlayback)
-            needsSwitch = true;
-        if (model.CaptureDeviceId != null && model.CaptureDeviceId != currentCapture)
-            needsSwitch = true;
+        bool needsSwitch = (model.PlaybackDeviceId != null && model.PlaybackDeviceId != currentPlayback) ||
+                           (model.CaptureDeviceId != null && model.CaptureDeviceId != currentCapture);
 
         var activeProfile = _switchingService.GetCurrentActiveProfile();
 

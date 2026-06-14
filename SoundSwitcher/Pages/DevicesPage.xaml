@@ -7,7 +7,6 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
     xmlns:vm="clr-namespace:SoundSwitcher.ViewModels"
-    xmlns:dd="urn:gong-wpf-dragdrop"
     Title="DevicesPage"
     d:DesignHeight="500"
     d:DesignWidth="440"
@@ -15,64 +14,51 @@
 
     <Page.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis" />
-        <converters:NullToVisibilityConverter x:Key="NullToVis" xmlns:converters="clr-namespace:SoundSwitcher.Converters" />
-        <converters:NullToVisibilityConverter x:Key="NotNullToVis" Invert="True" xmlns:converters="clr-namespace:SoundSwitcher.Converters" />
+        <converters:NullToVisibilityConverter xmlns:converters="clr-namespace:SoundSwitcher.Converters" x:Key="NullToVis" />
+        <converters:NullToVisibilityConverter
+            xmlns:converters="clr-namespace:SoundSwitcher.Converters"
+            x:Key="NotNullToVis"
+            Invert="True" />
     </Page.Resources>
 
     <StackPanel Margin="0,18,0,10" behaviors:MarginSetter.Margin="15,0,15,5">
-        <!-- Profile List -->
-        <ItemsControl ItemsSource="{Binding Profiles}" x:Name="ProfileItemsControl">
+        <!--  Profile List  -->
+        <ItemsControl x:Name="ProfileItemsControl" ItemsSource="{Binding Profiles}">
             <ItemsControl.ItemTemplate>
                 <DataTemplate DataType="{x:Type vm:DeviceProfileViewModel}">
-                    <Button Command="{Binding ApplyCommand}"
-                            Margin="0,0,0,8"
-                            Padding="0"
-                            HorizontalAlignment="Stretch"
-                            Background="{DynamicResource ControlFillColorDefaultBrush}"
-                            BorderThickness="0"
-                            HorizontalContentAlignment="Stretch"
-                            VerticalContentAlignment="Stretch"
-                            behaviors:AnimatedPressBehavior.IsEnabled="True"
-                            behaviors:AnimatedPressBehavior.HoverBackground="{DynamicResource ControlFillColorSecondaryBrush}"
-                            ContextMenuOpening="ProfileBorder_ContextMenuOpening"
-                            ContextMenuClosing="ProfileBorder_ContextMenuClosing">
+                    <Button
+                        Margin="0,0,0,8"
+                        Padding="0"
+                        HorizontalAlignment="Stretch"
+                        HorizontalContentAlignment="Stretch"
+                        VerticalContentAlignment="Stretch"
+                        behaviors:AnimatedPressBehavior.HoverBackground="{DynamicResource ControlFillColorSecondaryBrush}"
+                        behaviors:AnimatedPressBehavior.IsEnabled="True"
+                        Background="{DynamicResource ControlFillColorDefaultBrush}"
+                        BorderThickness="0"
+                        Command="{Binding ApplyCommand}"
+                        ContextMenuClosing="ProfileBorder_ContextMenuClosing"
+                        ContextMenuOpening="ProfileBorder_ContextMenuOpening">
                         <Button.ContextMenu>
                             <ContextMenu>
-                                <MenuItem Header="아이콘 변경" Command="{Binding ChangeIconCommand}" />
-                                <MenuItem Header="기본 아이콘으로 초기화" Command="{Binding ResetIconCommand}" 
-                                          Visibility="{Binding IconImage, Converter={StaticResource NotNullToVis}}" />
-                                <MenuItem Header="삭제" Command="{Binding DeleteCommand}" />
+                                <MenuItem Command="{Binding ChangeIconCommand}" Header="아이콘 변경" />
+                                <MenuItem
+                                    Command="{Binding ResetIconCommand}"
+                                    Header="기본 아이콘으로 초기화"
+                                    Visibility="{Binding IconImage, Converter={StaticResource NotNullToVis}}" />
+                                <MenuItem Command="{Binding DeleteCommand}" Header="삭제" />
                             </ContextMenu>
                         </Button.ContextMenu>
                         <Button.Template>
                             <ControlTemplate TargetType="Button">
-                                <Border x:Name="RootBorder"
-                                        Padding="12" 
-                                        BorderThickness="1" 
-                                        CornerRadius="4"
-                                        RenderTransformOrigin="0.5,0.5"
-                                        Background="{TemplateBinding Background}"
-                                        BorderBrush="{DynamicResource SurfaceStrokeColorDefaultBrush}"
-                                        Loaded="ProfileBorder_Loaded">
-                                    <Border.Resources>
-                                        <Storyboard x:Key="LoadStoryboard" FillBehavior="Stop">
-                                            <DoubleAnimation Storyboard.TargetProperty="Opacity" From="0" To="1" Duration="0:0:0.35">
-                                                <DoubleAnimation.EasingFunction>
-                                                    <CubicEase EasingMode="EaseOut" />
-                                                </DoubleAnimation.EasingFunction>
-                                            </DoubleAnimation>
-                                            <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(TransformGroup.Children)[0].(TranslateTransform.Y)" From="30" To="0" Duration="0:0:0.35">
-                                                <DoubleAnimation.EasingFunction>
-                                                    <CubicEase EasingMode="EaseOut" />
-                                                </DoubleAnimation.EasingFunction>
-                                            </DoubleAnimation>
-                                            <DoubleAnimation Storyboard.TargetProperty="(FrameworkElement.LayoutTransform).(ScaleTransform.ScaleY)" From="0" To="1" Duration="0:0:0.35">
-                                                <DoubleAnimation.EasingFunction>
-                                                    <CubicEase EasingMode="EaseOut" />
-                                                </DoubleAnimation.EasingFunction>
-                                            </DoubleAnimation>
-                                        </Storyboard>
-                                    </Border.Resources>
+                                <Border
+                                    x:Name="RootBorder"
+                                    Padding="12"
+                                    Background="{TemplateBinding Background}"
+                                    BorderBrush="{DynamicResource SurfaceStrokeColorDefaultBrush}"
+                                    BorderThickness="1"
+                                    CornerRadius="4"
+                                    RenderTransformOrigin="0.5,0.5">
                                     <Border.LayoutTransform>
                                         <ScaleTransform ScaleX="1" ScaleY="1" />
                                     </Border.LayoutTransform>
@@ -84,67 +70,102 @@
                                     </Border.RenderTransform>
                                     <Grid x:Name="CardGrid" Background="Transparent">
                                         <Grid.ColumnDefinitions>
-                                            <!-- Grip -->
+                                            <!--  Grip  -->
                                             <ColumnDefinition Width="Auto" />
-                                            <!-- Icon -->
+                                            <!--  Icon  -->
                                             <ColumnDefinition Width="Auto" />
-                                            <!-- Content -->
+                                            <!--  Content  -->
                                             <ColumnDefinition Width="*" />
                                         </Grid.ColumnDefinitions>
 
-                                        <!-- Grip Handle -->
-                                        <Border Grid.Column="0" Margin="0,0,12,0" 
-                                                Background="Transparent" 
-                                                Cursor="SizeAll" 
-                                                VerticalAlignment="Center"
-                                                behaviors:AnimatedPressBehavior.IgnorePress="True"
-                                                behaviors:LiveReorderBehavior.IsReorderGrip="True">
-                                            <ui:SymbolIcon Symbol="ReOrderDotsVertical24" Foreground="Gray" />
+                                        <!--  Grip Handle  -->
+                                        <Border
+                                            Grid.Column="0"
+                                            Margin="0,0,12,0"
+                                            VerticalAlignment="Center"
+                                            behaviors:AnimatedPressBehavior.IgnorePress="True"
+                                            behaviors:LiveReorderBehavior.IsReorderGrip="True"
+                                            Background="Transparent"
+                                            Cursor="SizeAll">
+                                            <ui:SymbolIcon Foreground="Gray" Symbol="ReOrderDotsVertical24" />
                                         </Border>
 
-                                        <!-- Icon Area -->
-                                        <Grid Grid.Column="1" Width="40" Margin="0,0,12,0" VerticalAlignment="Center">
-                                            <Border CornerRadius="4" Background="Transparent">
+                                        <!--  Icon Area  -->
+                                        <Grid
+                                            Grid.Column="1"
+                                            Width="40"
+                                            Margin="0,0,12,0"
+                                            VerticalAlignment="Center">
+                                            <Border Background="Transparent" CornerRadius="4">
                                                 <Grid>
-                                                    <!-- Default Icon (Native or Symbol fallback) -->
+                                                    <!--  Default Icon (Native or Symbol fallback)  -->
                                                     <Grid Visibility="{Binding IconImage, Converter={StaticResource NullToVis}}">
-                                                        <!-- Built-in Symbol Fallback -->
-                                                        <ui:SymbolIcon Symbol="Speaker224" FontSize="28" Foreground="Gray" 
-                                                                       Visibility="{Binding FallbackDeviceIcon, Converter={StaticResource NullToVis}}" />
-                                                        <!-- Native Device Icon -->
-                                                        <Image Source="{Binding FallbackDeviceIcon}" Width="32" Height="32" Stretch="Uniform" 
-                                                               Visibility="{Binding FallbackDeviceIcon, Converter={StaticResource NotNullToVis}}" />
+                                                        <!--  Built-in Symbol Fallback  -->
+                                                        <ui:SymbolIcon
+                                                            FontSize="28"
+                                                            Foreground="Gray"
+                                                            Symbol="Speaker224"
+                                                            Visibility="{Binding FallbackDeviceIcon, Converter={StaticResource NullToVis}}" />
+                                                        <!--  Native Device Icon  -->
+                                                        <Image
+                                                            Width="32"
+                                                            Height="32"
+                                                            Source="{Binding FallbackDeviceIcon}"
+                                                            Stretch="Uniform"
+                                                            Visibility="{Binding FallbackDeviceIcon, Converter={StaticResource NotNullToVis}}" />
                                                     </Grid>
-                                                    
-                                                    <!-- Custom Icon -->
-                                                    <Image Source="{Binding IconImage}" Width="40" Height="40" Stretch="UniformToFill" 
-                                                           Visibility="{Binding IconImage, Converter={StaticResource NotNullToVis}}" />
-                                                    
-                                                    <!-- Active Checkmark Overlay -->
-                                                    <Grid HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,-4,-4"
-                                                          Visibility="{Binding IsActive, Converter={StaticResource BoolToVis}}">
-                                                        <Ellipse Width="16" Height="16" Fill="#107C10" />
-                                                        <ui:SymbolIcon Symbol="Checkmark12" FontSize="10" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center" />
+
+                                                    <!--  Custom Icon  -->
+                                                    <Image
+                                                        Width="40"
+                                                        Height="40"
+                                                        Source="{Binding IconImage}"
+                                                        Stretch="UniformToFill"
+                                                        Visibility="{Binding IconImage, Converter={StaticResource NotNullToVis}}" />
+
+                                                    <!--  Active Checkmark Overlay  -->
+                                                    <Grid
+                                                        Margin="0,0,-4,-4"
+                                                        HorizontalAlignment="Right"
+                                                        VerticalAlignment="Bottom"
+                                                        Visibility="{Binding IsActive, Converter={StaticResource BoolToVis}}">
+                                                        <Ellipse
+                                                            Width="16"
+                                                            Height="16"
+                                                            Fill="#107C10" />
+                                                        <ui:SymbolIcon
+                                                            HorizontalAlignment="Center"
+                                                            VerticalAlignment="Center"
+                                                            FontSize="10"
+                                                            Foreground="White"
+                                                            Symbol="Checkmark12" />
                                                     </Grid>
                                                 </Grid>
                                             </Border>
                                         </Grid>
 
-                                        <!-- Profile Content -->
+                                        <!--  Profile Content  -->
                                         <StackPanel Grid.Column="2" VerticalAlignment="Center">
                                             <Grid Margin="0,0,0,4">
                                                 <Grid.ColumnDefinitions>
                                                     <ColumnDefinition Width="60" />
                                                     <ColumnDefinition Width="*" />
                                                 </Grid.ColumnDefinitions>
-                                                <StackPanel Orientation="Horizontal" Grid.Column="0" VerticalAlignment="Center">
-                                                    <ui:SymbolIcon Symbol="Speaker224" Margin="0,0,4,0"/>
-                                                    <TextBlock Text="출력" FontSize="12" VerticalAlignment="Center" />
+                                                <StackPanel
+                                                    Grid.Column="0"
+                                                    VerticalAlignment="Center"
+                                                    Orientation="Horizontal">
+                                                    <ui:SymbolIcon Margin="0,0,4,0" Symbol="Speaker224" />
+                                                    <TextBlock
+                                                        VerticalAlignment="Center"
+                                                        FontSize="12"
+                                                        Text="출력" />
                                                 </StackPanel>
-                                                <ComboBox Grid.Column="1" 
-                                                          ItemsSource="{Binding DataContext.AvailablePlaybackDevices, RelativeSource={RelativeSource AncestorType=Page}}"
-                                                          SelectedValuePath="DeviceId"
-                                                          SelectedValue="{Binding PlaybackDeviceId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                                                <ComboBox
+                                                    Grid.Column="1"
+                                                    ItemsSource="{Binding DataContext.AvailablePlaybackDevices, RelativeSource={RelativeSource AncestorType=Page}}"
+                                                    SelectedValue="{Binding PlaybackDeviceId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                    SelectedValuePath="DeviceId">
                                                     <ComboBox.ItemTemplate>
                                                         <DataTemplate>
                                                             <Grid Margin="0,2">
@@ -152,8 +173,18 @@
                                                                     <ColumnDefinition Width="Auto" />
                                                                     <ColumnDefinition Width="*" />
                                                                 </Grid.ColumnDefinitions>
-                                                                <Image Grid.Column="0" Source="{Binding DeviceIcon}" Width="16" Height="16" Margin="0,0,6,0" VerticalAlignment="Center" />
-                                                                <TextBlock Grid.Column="1" Text="{Binding Name}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                                                                <Image
+                                                                    Grid.Column="0"
+                                                                    Width="16"
+                                                                    Height="16"
+                                                                    Margin="0,0,6,0"
+                                                                    VerticalAlignment="Center"
+                                                                    Source="{Binding DeviceIcon}" />
+                                                                <TextBlock
+                                                                    Grid.Column="1"
+                                                                    VerticalAlignment="Center"
+                                                                    Text="{Binding Name}"
+                                                                    TextTrimming="CharacterEllipsis" />
                                                             </Grid>
                                                         </DataTemplate>
                                                     </ComboBox.ItemTemplate>
@@ -165,14 +196,21 @@
                                                     <ColumnDefinition Width="60" />
                                                     <ColumnDefinition Width="*" />
                                                 </Grid.ColumnDefinitions>
-                                                <StackPanel Orientation="Horizontal" Grid.Column="0" VerticalAlignment="Center">
-                                                    <ui:SymbolIcon Symbol="Mic24" Margin="0,0,4,0"/>
-                                                    <TextBlock Text="입력" FontSize="12" VerticalAlignment="Center" />
+                                                <StackPanel
+                                                    Grid.Column="0"
+                                                    VerticalAlignment="Center"
+                                                    Orientation="Horizontal">
+                                                    <ui:SymbolIcon Margin="0,0,4,0" Symbol="Mic24" />
+                                                    <TextBlock
+                                                        VerticalAlignment="Center"
+                                                        FontSize="12"
+                                                        Text="입력" />
                                                 </StackPanel>
-                                                <ComboBox Grid.Column="1" 
-                                                          ItemsSource="{Binding DataContext.AvailableCaptureDevices, RelativeSource={RelativeSource AncestorType=Page}}"
-                                                          SelectedValuePath="DeviceId"
-                                                          SelectedValue="{Binding CaptureDeviceId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                                                <ComboBox
+                                                    Grid.Column="1"
+                                                    ItemsSource="{Binding DataContext.AvailableCaptureDevices, RelativeSource={RelativeSource AncestorType=Page}}"
+                                                    SelectedValue="{Binding CaptureDeviceId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                    SelectedValuePath="DeviceId">
                                                     <ComboBox.ItemTemplate>
                                                         <DataTemplate>
                                                             <Grid Margin="0,2">
@@ -180,8 +218,18 @@
                                                                     <ColumnDefinition Width="Auto" />
                                                                     <ColumnDefinition Width="*" />
                                                                 </Grid.ColumnDefinitions>
-                                                                <Image Grid.Column="0" Source="{Binding DeviceIcon}" Width="16" Height="16" Margin="0,0,6,0" VerticalAlignment="Center" />
-                                                                <TextBlock Grid.Column="1" Text="{Binding Name}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                                                                <Image
+                                                                    Grid.Column="0"
+                                                                    Width="16"
+                                                                    Height="16"
+                                                                    Margin="0,0,6,0"
+                                                                    VerticalAlignment="Center"
+                                                                    Source="{Binding DeviceIcon}" />
+                                                                <TextBlock
+                                                                    Grid.Column="1"
+                                                                    VerticalAlignment="Center"
+                                                                    Text="{Binding Name}"
+                                                                    TextTrimming="CharacterEllipsis" />
                                                             </Grid>
                                                         </DataTemplate>
                                                     </ComboBox.ItemTemplate>
@@ -191,21 +239,71 @@
                                     </Grid>
                                 </Border>
                                 <ControlTemplate.Triggers>
+                                    <DataTrigger Binding="{Binding IsNew}" Value="True">
+                                        <DataTrigger.EnterActions>
+                                            <BeginStoryboard>
+                                                <Storyboard>
+                                                    <DoubleAnimation
+                                                        Storyboard.TargetName="RootBorder"
+                                                        Storyboard.TargetProperty="Opacity"
+                                                        From="0"
+                                                        To="1"
+                                                        Duration="0:0:0.35">
+                                                        <DoubleAnimation.EasingFunction>
+                                                            <CubicEase EasingMode="EaseOut" />
+                                                        </DoubleAnimation.EasingFunction>
+                                                    </DoubleAnimation>
+                                                    <DoubleAnimation
+                                                        Storyboard.TargetName="RootBorder"
+                                                        Storyboard.TargetProperty="(UIElement.RenderTransform).(TransformGroup.Children)[0].(TranslateTransform.Y)"
+                                                        From="30"
+                                                        To="0"
+                                                        Duration="0:0:0.35">
+                                                        <DoubleAnimation.EasingFunction>
+                                                            <CubicEase EasingMode="EaseOut" />
+                                                        </DoubleAnimation.EasingFunction>
+                                                    </DoubleAnimation>
+                                                    <DoubleAnimation
+                                                        Storyboard.TargetName="RootBorder"
+                                                        Storyboard.TargetProperty="(FrameworkElement.LayoutTransform).(ScaleTransform.ScaleY)"
+                                                        From="0"
+                                                        To="1"
+                                                        Duration="0:0:0.35">
+                                                        <DoubleAnimation.EasingFunction>
+                                                            <CubicEase EasingMode="EaseOut" />
+                                                        </DoubleAnimation.EasingFunction>
+                                                    </DoubleAnimation>
+                                                </Storyboard>
+                                            </BeginStoryboard>
+                                        </DataTrigger.EnterActions>
+                                    </DataTrigger>
                                     <DataTrigger Binding="{Binding IsDeleting}" Value="True">
                                         <DataTrigger.EnterActions>
                                             <BeginStoryboard>
                                                 <Storyboard>
-                                                    <DoubleAnimation Storyboard.TargetName="RootBorder" Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.35">
+                                                    <DoubleAnimation
+                                                        Storyboard.TargetName="RootBorder"
+                                                        Storyboard.TargetProperty="Opacity"
+                                                        To="0"
+                                                        Duration="0:0:0.35">
                                                         <DoubleAnimation.EasingFunction>
                                                             <CubicEase EasingMode="EaseInOut" />
                                                         </DoubleAnimation.EasingFunction>
                                                     </DoubleAnimation>
-                                                    <DoubleAnimation Storyboard.TargetName="RootBorder" Storyboard.TargetProperty="(UIElement.RenderTransform).(TransformGroup.Children)[0].(TranslateTransform.Y)" To="30" Duration="0:0:0.35">
+                                                    <DoubleAnimation
+                                                        Storyboard.TargetName="RootBorder"
+                                                        Storyboard.TargetProperty="(UIElement.RenderTransform).(TransformGroup.Children)[0].(TranslateTransform.Y)"
+                                                        To="30"
+                                                        Duration="0:0:0.35">
                                                         <DoubleAnimation.EasingFunction>
                                                             <CubicEase EasingMode="EaseInOut" />
                                                         </DoubleAnimation.EasingFunction>
                                                     </DoubleAnimation>
-                                                    <DoubleAnimation Storyboard.TargetName="RootBorder" Storyboard.TargetProperty="(FrameworkElement.LayoutTransform).(ScaleTransform.ScaleY)" To="0" Duration="0:0:0.35">
+                                                    <DoubleAnimation
+                                                        Storyboard.TargetName="RootBorder"
+                                                        Storyboard.TargetProperty="(FrameworkElement.LayoutTransform).(ScaleTransform.ScaleY)"
+                                                        To="0"
+                                                        Duration="0:0:0.35">
                                                         <DoubleAnimation.EasingFunction>
                                                             <CubicEase EasingMode="EaseInOut" />
                                                         </DoubleAnimation.EasingFunction>
@@ -226,14 +324,15 @@
             </ItemsControl.ItemTemplate>
         </ItemsControl>
 
-        <!-- Add Button -->
-        <Button Command="{Binding AddProfileCommand}" 
-                Background="Transparent" 
-                BorderThickness="0" 
-                Padding="0" 
-                Margin="0,4,0,0"
-                Cursor="Hand"
-                HorizontalAlignment="Stretch">
+        <!--  Add Button  -->
+        <Button
+            Margin="0,4,0,0"
+            Padding="0"
+            HorizontalAlignment="Stretch"
+            Background="Transparent"
+            BorderThickness="0"
+            Command="{Binding AddProfileCommand}"
+            Cursor="Hand">
             <Button.Style>
                 <Style TargetType="Button">
                     <Setter Property="Visibility" Value="Visible" />
@@ -247,14 +346,23 @@
             <Button.Template>
                 <ControlTemplate TargetType="Button">
                     <Grid Background="Transparent">
-                        <Rectangle StrokeDashArray="4 4" Stroke="Gray" StrokeThickness="2" RadiusX="4" RadiusY="4" Fill="Transparent" />
-                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,16" />
+                        <Rectangle
+                            Fill="Transparent"
+                            RadiusX="4"
+                            RadiusY="4"
+                            Stroke="Gray"
+                            StrokeDashArray="4 4"
+                            StrokeThickness="2" />
+                        <ContentPresenter
+                            Margin="0,16"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center" />
                     </Grid>
                 </ControlTemplate>
             </Button.Template>
             <StackPanel Orientation="Horizontal">
-                <ui:SymbolIcon Symbol="Add24" Margin="0,0,8,0" />
-                <TextBlock Text="새 프로파일 추가" FontWeight="SemiBold" />
+                <ui:SymbolIcon Margin="0,0,8,0" Symbol="Add24" />
+                <TextBlock FontWeight="SemiBold" Text="새 프로파일 추가" />
             </StackPanel>
         </Button>
     </StackPanel>
