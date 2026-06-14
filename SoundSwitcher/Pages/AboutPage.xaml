@@ -27,37 +27,36 @@
             </ui:CardControl.Header>
         </ui:CardControl>
 
-        <ui:CardControl>
-            <ui:CardControl.Icon>
-                <ui:SymbolIcon Symbol="Info24" />
-            </ui:CardControl.Icon>
-            <ui:CardControl.Header>
-                <StackPanel VerticalAlignment="Center">
-                    <TextBlock
-                        FontSize="13"
-                        FontWeight="Medium"
-                        Text="설명" />
-                    <TextBlock
-                        FontSize="12"
-                        Text="시스템 트레이에서 클릭 한 번으로 오디오 장치를 빠르게 전환하는 유틸리티입니다."
-                        TextWrapping="Wrap" />
-                </StackPanel>
-            </ui:CardControl.Header>
-        </ui:CardControl>
+        <ui:CardAction
+            x:Name="BtnCheckUpdate"
+            Click="BtnCheckUpdate_OnClick"
+            IsChevronVisible="True">
+            <ui:CardAction.Icon>
+                <ui:SymbolIcon Symbol="ArrowCounterclockwise24" />
+            </ui:CardAction.Icon>
+            <StackPanel VerticalAlignment="Center">
+                <TextBlock
+                    FontSize="13"
+                    FontWeight="Medium"
+                    Text="업데이트 확인" />
+                <TextBlock FontSize="12" Text="프로그램의 최신 업데이트를 확인 및 설치합니다." />
+            </StackPanel>
+        </ui:CardAction>
 
-        <ui:CardControl>
-            <ui:CardControl.Icon>
-                <ui:SymbolIcon Symbol="Code24" />
-            </ui:CardControl.Icon>
-            <ui:CardControl.Header>
-                <StackPanel VerticalAlignment="Center">
-                    <TextBlock
-                        FontSize="13"
-                        FontWeight="Medium"
-                        Text="기술 스택" />
-                    <TextBlock FontSize="12" Text=".NET 10 · WPF · WPF-UI · NAudio" />
-                </StackPanel>
-            </ui:CardControl.Header>
-        </ui:CardControl>
+        <ui:CardAction
+            x:Name="BtnOpenHomepage"
+            Click="BtnOpenHomepage_OnClick"
+            IsChevronVisible="True">
+            <ui:CardAction.Icon>
+                <ui:SymbolIcon Symbol="Open24" />
+            </ui:CardAction.Icon>
+            <StackPanel VerticalAlignment="Center">
+                <TextBlock
+                    FontSize="13"
+                    FontWeight="Medium"
+                    Text="홈페이지" />
+                <TextBlock FontSize="12" Text="프로그램의 공식 홈페이지를 방문합니다." />
+            </StackPanel>
+        </ui:CardAction>
     </StackPanel>
 </Page>

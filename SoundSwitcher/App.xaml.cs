@@ -198,23 +198,12 @@ public partial class App
         _trayContextMenu = new ContextMenu();
         var menuSettings = CreateMenuItem("프로그램 설정", ShowWithActivate, SymbolRegular.Settings24);
         var menuSystemSoundSettings = CreateMenuItem("시스템 소리 설정", OpenSystemSoundSettings, SymbolRegular.Speaker224);
-#if RELEASE
-        var menuUpdate = CreateMenuItem("업데이트 확인", () =>
-        {
-            try { WinSparkleNative.win_sparkle_check_update_with_ui(); }
-            catch
-            {
-                // ignored
-            }
-        }, SymbolRegular.ArrowDownload24);
-#endif
+
         var menuExit = CreateMenuItem("종료", () => Current.Shutdown(), SymbolRegular.ArrowExit20);
 
         _trayContextMenu.Items.Add(menuSettings);
         _trayContextMenu.Items.Add(menuSystemSoundSettings);
-#if RELEASE
-        _trayContextMenu.Items.Add(menuUpdate);
-#endif
+
         _trayContextMenu.Items.Add(new Separator());
         _trayContextMenu.Items.Add(menuExit);
 
