@@ -144,6 +144,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Prepare Appcast and Release Notes
+      shell: pwsh
       run: |
         mkdir public
         $version = "${{ env.RELEASE_TAG }}"
@@ -152,32 +153,40 @@ jobs:
         $pubDate = (Get-Date).ToString("R")
         $fileSize = (Get-Item "SoundSwitcher-${version}-Portable.zip").Length
         
-        # 1. Process multilingual release notes (Markdown to basic HTML)
+        # 1. Process multilingual release notes into a single HTML file with JS routing
         $langs = @("en-US", "ko-KR", "ja-JP", "zh-CN", "zh-TW")
+        $combinedHtml = "<html><head><meta charset='utf-8'><style>body{font-family:sans-serif;} .lang-content{display:none;}</style>"
+        $combinedHtml += "<script>window.onload = function() { var lang = (navigator.language || navigator.userLanguage || 'en').substring(0,2); var el = document.getElementById('content-' + lang); if (el) { el.style.display = 'block'; } else { var def = document.getElementById('content-en'); if(def) def.style.display = 'block'; else { var first = document.querySelector('.lang-content'); if(first) first.style.display = 'block'; } } };</script></head><body><h2>SoundSwitcher $version</h2>"
+        
         foreach ($lang in $langs) {
             $versionFile = "ReleaseNotes/${{ env.RELEASE_TAG }}/${lang}.md"
             $defaultFile = "ReleaseNotes/default/${lang}.md"
-            $targetHtml = "public/release-notes-${lang}.html"
             
             if (Test-Path $versionFile) {
-                $mdContent = Get-Content $versionFile -Raw
+                $mdHtml = (ConvertFrom-Markdown -Path $versionFile).Html
             } elseif (Test-Path $defaultFile) {
-                $mdContent = Get-Content $defaultFile -Raw
+                $mdHtml = (ConvertFrom-Markdown -Path $defaultFile).Html
             } else {
-                $mdContent = "No release notes available."
+                $mdHtml = "<p>No release notes available.</p>"
             }
             
-            $htmlContent = "<html><head><style>body{font-family:sans-serif;}</style></head><body><h2>SoundSwitcher $version</h2><pre>$mdContent</pre></body></html>"
-            Set-Content -Path $targetHtml -Value $htmlContent
+            $shortLang = $lang.Substring(0,2)
+            # ZH uses zh-CN / zh-TW conventionally but for substring(0,2) it's just zh. 
+            # We will append the full lang class just in case, but use ID for short lang.
+            # To support exact match or short match:
+            $combinedHtml += "<div id='content-$shortLang' class='lang-content' data-lang='$lang'>$mdHtml</div>"
         }
+        $combinedHtml += "</body></html>"
         
-        # Generic fallback using en-US
-        Copy-Item -Path "public/release-notes-en-US.html" -Destination "public/release-notes-default.html" -Force
+        Set-Content -Path "public/release-notes.html" -Value $combinedHtml
         
         # 2. Generate Appcast XML
         $baseUrl = "${{ vars.UPDATE_BASE_URL }}".TrimEnd('/')
         $appcastUrl = "$baseUrl/appcast.xml"
         
+        # Note: WinSparkle does not correctly parse multiple <sparkle:releaseNotesLink> tags.
+        # It concatenates all URLs into a single string, resulting in a 404 error.
+        # Therefore, we only provide a single release notes URL.
         $appcastXml = @"
         <?xml version="1.0" encoding="utf-8"?>
         <rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle">
@@ -187,12 +196,7 @@ jobs:
             <description>Most recent changes with links to updates.</description>
             <item>
               <title>Version $version</title>
-              <sparkle:releaseNotesLink>$baseUrl/release-notes-default.html</sparkle:releaseNotesLink>
-              <sparkle:releaseNotesLink xml:lang="en-US">$baseUrl/release-notes-en-US.html</sparkle:releaseNotesLink>
-              <sparkle:releaseNotesLink xml:lang="ko-KR">$baseUrl/release-notes-ko-KR.html</sparkle:releaseNotesLink>
-              <sparkle:releaseNotesLink xml:lang="ja-JP">$baseUrl/release-notes-ja-JP.html</sparkle:releaseNotesLink>
-              <sparkle:releaseNotesLink xml:lang="zh-CN">$baseUrl/release-notes-zh-CN.html</sparkle:releaseNotesLink>
-              <sparkle:releaseNotesLink xml:lang="zh-TW">$baseUrl/release-notes-zh-TW.html</sparkle:releaseNotesLink>
+              <sparkle:releaseNotesLink>$baseUrl/release-notes.html</sparkle:releaseNotesLink>
               <pubDate>$pubDate</pubDate>
               <enclosure url="$downloadUrl"
                          sparkle:version="$version"
