@@ -42,38 +42,45 @@ jobs:
             Fail-Workflow "Workflow must be run on a 'release/*' branch. Current branch: $branchName"
         }
         
-        $tag = $branchName.Substring("release/".Length)
-        echo "RELEASE_TAG=$tag" >> $env:GITHUB_ENV
+        $baseVersionStr = $branchName.Substring("release/".Length)
         
-        $targetVersionStr = $tag
-        
-        # 2. Check for leading zeros (e.g. 1.1.01.1)
-        if ($targetVersionStr -match "\b0[0-9]+") {
-            Fail-Workflow "Version cannot contain segments with leading zeros: $targetVersionStr"
+        # 2. Check for leading zeros
+        if ($baseVersionStr -match "\b0[0-9]+") {
+            Fail-Workflow "Version cannot contain segments with leading zeros: $baseVersionStr"
         }
         
         try {
-            $targetVersion = [System.Version]::Parse($targetVersionStr)
+            $baseVersion = [System.Version]::Parse($baseVersionStr)
         } catch {
-            Fail-Workflow "Invalid version format. Versions must be like X.Y.Z.W. Received: $targetVersionStr"
+            Fail-Workflow "Invalid version format. Received: $baseVersionStr"
         }
         
         $tags = git tag | Where-Object { $_ -match "^[0-9]+\.[0-9]+\.[0-9]+(\.[0-9]+)?$" } | ForEach-Object { 
             try { [System.Version]$_ } catch { $null } 
         } | Where-Object { $_ -ne $null }
         
-        $highestTag = $null
-        if ($tags) {
-            $tags = $tags | Sort-Object
-            $highestTag = $tags[-1]
-            
-            # 3. Check if a tag >= target version already exists
-            $tagsGreaterOrEqualBranch = $tags | Where-Object { $_ -ge $targetVersion }
-            if ($tagsGreaterOrEqualBranch) {
-                $conflictTag = $tagsGreaterOrEqualBranch[0]
-                Fail-Workflow "A tag equal to or newer than the target version ($targetVersionStr) already exists: $conflictTag"
-            }
+        # 3. Check if a tag from a newer release branch already exists
+        $maxAllowed = [System.Version]::Parse("$($baseVersion.Major).$($baseVersion.Minor).$($baseVersion.Build).9999")
+        $tagsGreaterBranch = $tags | Where-Object { $_ -gt $maxAllowed }
+        if ($tagsGreaterBranch) {
+            $conflictTag = ($tagsGreaterBranch | Sort-Object)[0]
+            Fail-Workflow "A newer release branch tag already exists: $conflictTag"
         }
+        
+        # 4. Calculate next revision
+        $matchingTags = $tags | Where-Object { $_.Major -eq $baseVersion.Major -and $_.Minor -eq $baseVersion.Minor -and $_.Build -eq $baseVersion.Build } | Sort-Object
+        
+        $nextRevision = 0
+        if ($matchingTags) {
+            $highestTag = $matchingTags[-1]
+            $highestRevision = $highestTag.Revision
+            if ($highestRevision -lt 0) { $highestRevision = 0 }
+            $nextRevision = $highestRevision + 1
+        }
+        
+        $finalVersionStr = "$($baseVersion.Major).$($baseVersion.Minor).$($baseVersion.Build).$nextRevision"
+        echo "RELEASE_TAG=$finalVersionStr" >> $env:GITHUB_ENV
+        echo "Calculated target version: $finalVersionStr"
 
     - name: Setup .NET
       uses: actions/setup-dotnet@v5.3.0
@@ -212,6 +219,14 @@ jobs:
       id: deployment
       uses: actions/deploy-pages@v5.0.0
 
+    - name: Update Git Tag for Release
+      run: |
+        $tag = "${{ env.RELEASE_TAG }}"
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        git tag -f $tag
+        git push -f origin $tag
+
     - name: Create GitHub Release
       id: create_release
       uses: softprops/action-gh-release@v3.0.0
@@ -223,6 +238,17 @@ jobs:
         generate_release_notes: true
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Regenerate Release Notes
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        $tag = "${{ env.RELEASE_TAG }}"
+        $notes = gh api --method POST -H "Accept: application/vnd.github+json" /repos/${{ github.repository }}/releases/generate-notes -f tag_name="$tag" -q .body
+        if ($notes) {
+            $notes | Out-File release_notes.md -Encoding utf8
+            gh release edit $tag --notes-file release_notes.md
+        }
 
     - name: Write Job Summary
       run: |
