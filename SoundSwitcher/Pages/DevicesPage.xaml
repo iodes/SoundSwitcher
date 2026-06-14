@@ -345,24 +345,138 @@
             </Button.Style>
             <Button.Template>
                 <ControlTemplate TargetType="Button">
-                    <Grid Background="Transparent">
+                    <Grid x:Name="RootGrid" Background="Transparent" RenderTransformOrigin="0.5,0.5">
+                        <Grid.RenderTransform>
+                            <ScaleTransform ScaleX="1" ScaleY="1" />
+                        </Grid.RenderTransform>
                         <Rectangle
-                            Fill="Transparent"
-                            RadiusX="4"
-                            RadiusY="4"
-                            Stroke="Gray"
+                            x:Name="BgRect"
+                            RadiusX="6"
+                            RadiusY="6"
                             StrokeDashArray="4 4"
-                            StrokeThickness="2" />
+                            StrokeThickness="2">
+                            <Rectangle.Fill>
+                                <SolidColorBrush Color="Transparent" />
+                            </Rectangle.Fill>
+                            <Rectangle.Stroke>
+                                <SolidColorBrush Color="#60808080" />
+                            </Rectangle.Stroke>
+                        </Rectangle>
                         <ContentPresenter
                             Margin="0,16"
                             HorizontalAlignment="Center"
                             VerticalAlignment="Center" />
                     </Grid>
+                    <ControlTemplate.Triggers>
+                        <!-- IsPressed Trigger for ScaleTransform -->
+                        <Trigger Property="IsPressed" Value="True">
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation
+                                            Storyboard.TargetName="RootGrid"
+                                            Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)"
+                                            To="0.95"
+                                            Duration="0:0:0.04">
+                                            <DoubleAnimation.EasingFunction>
+                                                <CubicEase EasingMode="EaseOut" />
+                                            </DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                        <DoubleAnimation
+                                            Storyboard.TargetName="RootGrid"
+                                            Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)"
+                                            To="0.95"
+                                            Duration="0:0:0.04">
+                                            <DoubleAnimation.EasingFunction>
+                                                <CubicEase EasingMode="EaseOut" />
+                                            </DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation
+                                            Storyboard.TargetName="RootGrid"
+                                            Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)"
+                                            To="1.0"
+                                            Duration="0:0:0.15">
+                                            <DoubleAnimation.EasingFunction>
+                                                <CubicEase EasingMode="EaseOut" />
+                                            </DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                        <DoubleAnimation
+                                            Storyboard.TargetName="RootGrid"
+                                            Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)"
+                                            To="1.0"
+                                            Duration="0:0:0.15">
+                                            <DoubleAnimation.EasingFunction>
+                                                <CubicEase EasingMode="EaseOut" />
+                                            </DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
+                        </Trigger>
+
+                        <!-- IsMouseOver Trigger for Hover Effects -->
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <ColorAnimation
+                                            Storyboard.TargetName="BgRect"
+                                            Storyboard.TargetProperty="(Rectangle.Fill).(SolidColorBrush.Color)"
+                                            To="#0C808080"
+                                            Duration="0:0:0.1">
+                                            <ColorAnimation.EasingFunction>
+                                                <CubicEase EasingMode="EaseOut" />
+                                            </ColorAnimation.EasingFunction>
+                                        </ColorAnimation>
+                                        <ColorAnimation
+                                            Storyboard.TargetName="BgRect"
+                                            Storyboard.TargetProperty="(Rectangle.Stroke).(SolidColorBrush.Color)"
+                                            To="#FF808080"
+                                            Duration="0:0:0.1">
+                                            <ColorAnimation.EasingFunction>
+                                                <CubicEase EasingMode="EaseOut" />
+                                            </ColorAnimation.EasingFunction>
+                                        </ColorAnimation>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <ColorAnimation
+                                            Storyboard.TargetName="BgRect"
+                                            Storyboard.TargetProperty="(Rectangle.Fill).(SolidColorBrush.Color)"
+                                            To="Transparent"
+                                            Duration="0:0:0.2">
+                                            <ColorAnimation.EasingFunction>
+                                                <CubicEase EasingMode="EaseOut" />
+                                            </ColorAnimation.EasingFunction>
+                                        </ColorAnimation>
+                                        <ColorAnimation
+                                            Storyboard.TargetName="BgRect"
+                                            Storyboard.TargetProperty="(Rectangle.Stroke).(SolidColorBrush.Color)"
+                                            To="#60808080"
+                                            Duration="0:0:0.2">
+                                            <ColorAnimation.EasingFunction>
+                                                <CubicEase EasingMode="EaseOut" />
+                                            </ColorAnimation.EasingFunction>
+                                        </ColorAnimation>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Button.Template>
             <StackPanel Orientation="Horizontal">
                 <ui:SymbolIcon Margin="0,0,8,0" Symbol="Add24" />
-                <TextBlock FontWeight="SemiBold" Text="새 프로파일 추가" />
+                <TextBlock FontWeight="SemiBold" Text="프로파일 추가" />
             </StackPanel>
         </Button>
     </StackPanel>

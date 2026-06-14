@@ -20,6 +20,8 @@ namespace SoundSwitcher;
 public partial class App
 {
     #region Fields
+    private Mutex _mutex = null!;
+    private EventWaitHandle _activateEvent = null!;
     private MainWindow _mainWindow = null!;
     private TaskbarIcon _taskbarIcon = null!;
     private ContextMenu _trayContextMenu = null!;
@@ -57,6 +59,37 @@ public partial class App
     #region Startup / Exit
     private void App_OnStartup(object sender, StartupEventArgs e)
     {
+        _mutex = new Mutex(true, "SoundSwitcher.App.Mutex", out bool createdNew);
+
+        if (!createdNew)
+        {
+            if (EventWaitHandle.TryOpenExisting("SoundSwitcher.App.ActivateEvent", out var ewh))
+            {
+                ewh.Set();
+            }
+
+            Current.Shutdown();
+            return;
+        }
+
+        _activateEvent = new EventWaitHandle(false, EventResetMode.AutoReset, "SoundSwitcher.App.ActivateEvent");
+
+        Task.Factory.StartNew(() =>
+        {
+            try
+            {
+                while (true)
+                {
+                    _activateEvent.WaitOne();
+                    Dispatcher.Invoke(ShowWithActivate);
+                }
+            }
+            catch (ObjectDisposedException)
+            {
+                // Ignore
+            }
+        }, TaskCreationOptions.LongRunning);
+
         // Initialise services
         AudioService = new AudioDeviceService();
         SettingsService = new SettingsService();
@@ -72,20 +105,33 @@ public partial class App
         };
 
         InitializeUserInterface();
+
+        if (Environment.GetCommandLineArgs().Contains("/Activate", StringComparer.OrdinalIgnoreCase))
+        {
+            ShowWithActivate();
+        }
     }
 
     private void App_OnExit(object sender, ExitEventArgs e)
     {
-        _mainWindow.Close();
-        _taskbarIcon.IsEnabled = false;
-        _taskbarIcon.Dispose();
+        try
+        {
+            _mainWindow.Close();
+            _taskbarIcon.IsEnabled = false;
+            _taskbarIcon.Dispose();
+        }
+        finally
+        {
+            _mutex.Dispose();
+            _activateEvent.Dispose();
+        }
     }
     #endregion
 
     #region UI Initialisation
     private void ShowWithActivate()
     {
-        _mainWindow?.ShowAndActivate();
+        _mainWindow.ShowAndActivate();
     }
 
     private void OpenSystemSoundSettings()
