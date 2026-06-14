@@ -2,7 +2,11 @@
 #include "CodeDependencies.iss"
 
 #define MyAppName "SoundSwitcher"
-#define MyAppVersion "1.0.0.0"
+#define MyAppVersion GetEnv("APP_VERSION")
+#if MyAppVersion == ""
+  #undef MyAppVersion
+  #define MyAppVersion "1.0.0.0"
+#endif
 #define MyAppPublisher "Kodnix"
 #define MyAppURL "https://github.com/iodes/SoundSwitcher"
 #define MyAppExeName "SoundSwitcher.exe"
@@ -20,7 +24,7 @@ DefaultDirName={autopf}\{#MyAppName}
 ArchitecturesInstallIn64BitMode=x64
 DisableProgramGroupPage=yes
 ShowLanguageDialog=auto
-OutputBaseFilename={#MyAppName}_{#MyAppVersion}_Setup
+OutputBaseFilename={#MyAppName}-{#MyAppVersion}-Setup
 CloseApplications=no
 WizardStyle=modern
 
@@ -38,7 +42,7 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 [Code]
 function InitializeSetup: Boolean;
 begin
-    Dependency_AddDotNet80Desktop;
+    Dependency_AddDotNet100Desktop;
     Result := True;
 end;
 

@@ -90,6 +90,31 @@ public partial class App
             }
         }, TaskCreationOptions.LongRunning);
 
+#if RELEASE
+        // Initialise WinSparkle only in Release builds
+        try
+        {
+            var attributes = System.Reflection.Assembly.GetExecutingAssembly().GetCustomAttributes(typeof(System.Reflection.AssemblyMetadataAttribute), false);
+            var appcastAttr = attributes.OfType<System.Reflection.AssemblyMetadataAttribute>().FirstOrDefault(a => a.Key == "AppcastUrl");
+
+            if (appcastAttr != null && !string.IsNullOrEmpty(appcastAttr.Value))
+            {
+                WinSparkleNative.win_sparkle_set_appcast_url(appcastAttr.Value);
+                WinSparkleNative.win_sparkle_set_eddsa_public_key("8JV9mpX07duHEHUmrM7/Ref8TIuzh9IWZc+Of4dL0PI=");
+
+                var version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
+                var versionString = version?.ToString() ?? "1.0.0.0";
+                WinSparkleNative.win_sparkle_set_app_details("Kevin", "SoundSwitcher", versionString);
+
+                WinSparkleNative.win_sparkle_init();
+            }
+        }
+        catch
+        {
+            /* Ignore if DLL not found */
+        }
+#endif
+
         // Initialise services
         AudioService = new AudioDeviceService();
         SettingsService = new SettingsService();
@@ -116,6 +141,10 @@ public partial class App
     {
         try
         {
+#if RELEASE
+            try { WinSparkleNative.win_sparkle_cleanup(); }
+            catch { }
+#endif
             _mainWindow.Close();
             _taskbarIcon.IsEnabled = false;
             _taskbarIcon.Dispose();
@@ -169,10 +198,23 @@ public partial class App
         _trayContextMenu = new ContextMenu();
         var menuSettings = CreateMenuItem("프로그램 설정", ShowWithActivate, SymbolRegular.Settings24);
         var menuSystemSoundSettings = CreateMenuItem("시스템 소리 설정", OpenSystemSoundSettings, SymbolRegular.Speaker224);
+#if RELEASE
+        var menuUpdate = CreateMenuItem("업데이트 확인", () =>
+        {
+            try { WinSparkleNative.win_sparkle_check_update_with_ui(); }
+            catch
+            {
+                // ignored
+            }
+        }, SymbolRegular.ArrowDownload24);
+#endif
         var menuExit = CreateMenuItem("종료", () => Current.Shutdown(), SymbolRegular.ArrowExit20);
 
         _trayContextMenu.Items.Add(menuSettings);
         _trayContextMenu.Items.Add(menuSystemSoundSettings);
+#if RELEASE
+        _trayContextMenu.Items.Add(menuUpdate);
+#endif
         _trayContextMenu.Items.Add(new Separator());
         _trayContextMenu.Items.Add(menuExit);
 

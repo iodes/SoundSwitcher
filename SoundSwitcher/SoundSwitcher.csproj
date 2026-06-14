@@ -11,6 +11,14 @@
 
   <ItemGroup>
     <Content Include="Logo.ico" />
+    <Content Include="..\Libraries\WinSparkle\runtimes\**\*">
+      <Link>runtimes\%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(AppcastUrl)' != ''">
+    <AssemblyMetadata Include="AppcastUrl" Value="$(AppcastUrl)" />
   </ItemGroup>
 
   <ItemGroup>

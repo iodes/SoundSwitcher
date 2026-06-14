@@ -1,0 +1,233 @@
+name: Publish
+run-name: Publish ${{ github.ref_name }}
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: windows-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Validate Release Branch
+      run: |
+        $branchName = "${{ github.ref_name }}"
+        
+        function Fail-Workflow($reason) {
+            echo "### :x: Publish Failed" >> $env:GITHUB_STEP_SUMMARY
+            echo "**Reason:** $reason" >> $env:GITHUB_STEP_SUMMARY
+            Write-Error $reason
+            exit 1
+        }
+        
+        # 1. Require workflow to run on a release/* branch
+        if ($branchName -notmatch "^release/") {
+            Fail-Workflow "Workflow must be run on a 'release/*' branch. Current branch: $branchName"
+        }
+        
+        $tag = $branchName.Substring("release/".Length)
+        echo "RELEASE_TAG=$tag" >> $env:GITHUB_ENV
+        
+        $targetVersionStr = $tag
+        
+        # 2. Check for leading zeros (e.g. 1.1.01.1)
+        if ($targetVersionStr -match "\b0[0-9]+") {
+            Fail-Workflow "Version cannot contain segments with leading zeros: $targetVersionStr"
+        }
+        
+        try {
+            $targetVersion = [System.Version]::Parse($targetVersionStr)
+        } catch {
+            Fail-Workflow "Invalid version format. Versions must be like X.Y.Z.W. Received: $targetVersionStr"
+        }
+        
+        # 3. Get all tags
+        $tags = git tag | Where-Object { $_ -match "^[0-9]+\.[0-9]+\.[0-9]+(\.[0-9]+)?$" } | ForEach-Object { 
+            try { [System.Version]$_ } catch { $null } 
+        } | Where-Object { $_ -ne $null }
+        
+        $highestTag = $null
+        if ($tags) {
+            $tags = $tags | Sort-Object
+            $highestTag = $tags[-1]
+            
+            # 4. Check if a tag >= target version already exists
+            $tagsGreaterOrEqualBranch = $tags | Where-Object { $_ -ge $targetVersion }
+            if ($tagsGreaterOrEqualBranch) {
+                $conflictTag = $tagsGreaterOrEqualBranch[0]
+                Fail-Workflow "A tag equal to or newer than the target version ($targetVersionStr) already exists: $conflictTag"
+            }
+        }
+        
+        # 5. Check that no segment jumps by 2 or more compared to the previous highest tag
+        if ($highestTag) {
+            $vTarget = $targetVersion
+            $vPrev = $highestTag
+            
+            $majorDiff = $vTarget.Major - $vPrev.Major
+            $minorDiff = $vTarget.Minor - $vPrev.Minor
+            $buildDiff = $vTarget.Build - $vPrev.Build
+            $revDiff = $vTarget.Revision - $vPrev.Revision
+            
+            if ($majorDiff -ge 2 -or $minorDiff -ge 2 -or $buildDiff -ge 2 -or $revDiff -ge 2) {
+                Fail-Workflow "Cannot publish $targetVersionStr. A version segment increased by 2 or more compared to the previous tag ($vPrev). Each segment can only be incremented by a maximum of 1."
+            }
+        }
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '10.x'
+
+    - name: Restore dependencies
+      run: dotnet restore
+
+    - name: Build and Publish Portable (ZIP)
+      run: |
+        $version = "${{ env.RELEASE_TAG }}"
+        dotnet publish SoundSwitcher/SoundSwitcher.csproj -c Release -r win-x64 --self-contained false -p:Version=$version -p:AppcastUrl="${{ vars.UPDATE_BASE_URL }}/appcast.xml" -o out/portable
+        Compress-Archive -Path out/portable/* -DestinationPath "SoundSwitcher-${version}-Portable.zip"
+
+    - name: Prepare Installer Files
+      run: |
+        $version = "${{ env.RELEASE_TAG }}"
+        echo "APP_VERSION=$version" >> $env:GITHUB_ENV
+        New-Item -ItemType Directory -Force -Path "SoundSwitcher\bin\Release\net10.0-windows\publish"
+        Copy-Item -Path "out/portable\*" -Destination "SoundSwitcher\bin\Release\net10.0-windows\publish" -Recurse
+
+    - name: Compile Inno Setup Installer
+      run: |
+        if (-Not (Test-Path "C:\Program Files (x86)\Inno Setup 6\ISCC.exe")) {
+            choco install innosetup -y --no-progress
+        }
+        & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" Installer/Setup.iss
+
+    - name: Sign Update with WinSparkle EdDSA
+      run: |
+        $version = "${{ env.RELEASE_TAG }}"
+        $privateKeyPath = "dsa_priv.pem"
+        Set-Content -Path $privateKeyPath -Value "${{ secrets.WINSPARKLE_PRIVATE_KEY }}"
+        
+        $signature = & .\Libraries\WinSparkle\winsparkle-tool.exe sign -f $privateKeyPath "SoundSwitcher-${version}-Portable.zip"
+        echo "EDDSA_SIGNATURE=$signature" >> $env:GITHUB_ENV
+        
+        Remove-Item $privateKeyPath
+
+    - name: Create GitHub Release
+      id: create_release
+      uses: softprops/action-gh-release@v2
+      with:
+        name: SoundSwitcher ${{ env.APP_VERSION }}
+        tag_name: ${{ env.RELEASE_TAG }}
+        files: |
+          SoundSwitcher-*-Portable.zip
+          Installer/Output/SoundSwitcher-*-Setup.exe
+        generate_release_notes: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Prepare Appcast and Release Notes
+      run: |
+        mkdir public
+        $version = "${{ env.RELEASE_TAG }}"
+        $downloadUrl = "https://github.com/${{ github.repository }}/releases/download/${{ env.RELEASE_TAG }}/SoundSwitcher-${version}-Portable.zip"
+        $signature = $env:EDDSA_SIGNATURE
+        $pubDate = (Get-Date).ToString("R")
+        $fileSize = (Get-Item "SoundSwitcher-${version}-Portable.zip").Length
+        
+        # 1. Process multilingual release notes (Markdown to basic HTML)
+        $langs = @("en-US", "ko-KR", "ja-JP", "zh-CN", "zh-TW")
+        foreach ($lang in $langs) {
+            $versionFile = "ReleaseNotes/${{ env.RELEASE_TAG }}/${lang}.md"
+            $defaultFile = "ReleaseNotes/default/${lang}.md"
+            $targetHtml = "public/release-notes-${lang}.html"
+            
+            if (Test-Path $versionFile) {
+                $mdContent = Get-Content $versionFile -Raw
+            } elseif (Test-Path $defaultFile) {
+                $mdContent = Get-Content $defaultFile -Raw
+            } else {
+                $mdContent = "No release notes available."
+            }
+            
+            $htmlContent = "<html><head><style>body{font-family:sans-serif;}</style></head><body><h2>SoundSwitcher $version</h2><pre>$mdContent</pre></body></html>"
+            Set-Content -Path $targetHtml -Value $htmlContent
+        }
+        
+        # Generic fallback using en-US
+        Copy-Item -Path "public/release-notes-en-US.html" -Destination "public/release-notes-default.html" -Force
+        
+        # 2. Generate Appcast XML
+        $baseUrl = "${{ vars.UPDATE_BASE_URL }}".TrimEnd('/')
+        $appcastUrl = "$baseUrl/appcast.xml"
+        
+        $appcastXml = @"
+        <?xml version="1.0" encoding="utf-8"?>
+        <rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle">
+          <channel>
+            <title>SoundSwitcher Appcast</title>
+            <link>$appcastUrl</link>
+            <description>Most recent changes with links to updates.</description>
+            <item>
+              <title>Version $version</title>
+              <sparkle:releaseNotesLink>$baseUrl/release-notes-default.html</sparkle:releaseNotesLink>
+              <sparkle:releaseNotesLink xml:lang="en-US">$baseUrl/release-notes-en-US.html</sparkle:releaseNotesLink>
+              <sparkle:releaseNotesLink xml:lang="ko-KR">$baseUrl/release-notes-ko-KR.html</sparkle:releaseNotesLink>
+              <sparkle:releaseNotesLink xml:lang="ja-JP">$baseUrl/release-notes-ja-JP.html</sparkle:releaseNotesLink>
+              <sparkle:releaseNotesLink xml:lang="zh-CN">$baseUrl/release-notes-zh-CN.html</sparkle:releaseNotesLink>
+              <sparkle:releaseNotesLink xml:lang="zh-TW">$baseUrl/release-notes-zh-TW.html</sparkle:releaseNotesLink>
+              <pubDate>$pubDate</pubDate>
+              <enclosure url="$downloadUrl"
+                         sparkle:version="$version"
+                         sparkle:edSignature="$signature"
+                         length="$fileSize"
+                         type="application/octet-stream" />
+            </item>
+          </channel>
+        </rss>
+        "@
+        
+        Set-Content -Path public/appcast.xml -Value $appcastXml
+
+    - name: Setup Pages
+      uses: actions/configure-pages@v5
+
+    - name: Upload artifact
+      uses: actions/upload-pages-artifact@v3
+      with:
+        path: './public'
+
+    - name: Deploy to GitHub Pages
+      id: deployment
+      uses: actions/deploy-pages@v5
+
+    - name: Write Job Summary
+      run: |
+        $version = "${{ env.RELEASE_TAG }}"
+        $baseUrl = "${{ vars.UPDATE_BASE_URL }}".TrimEnd('/')
+        echo "### :rocket: Release $version Published!" >> $env:GITHUB_STEP_SUMMARY
+        echo "" >> $env:GITHUB_STEP_SUMMARY
+        echo "#### :package: Downloads (GitHub Releases)" >> $env:GITHUB_STEP_SUMMARY
+        echo "- **Portable**: ``SoundSwitcher-${version}-Portable.zip``" >> $env:GITHUB_STEP_SUMMARY
+        echo "- **Installer**: ``SoundSwitcher-${version}-Setup.exe``" >> $env:GITHUB_STEP_SUMMARY
+        echo "" >> $env:GITHUB_STEP_SUMMARY
+        echo "#### :globe_with_meridians: GitHub Pages" >> $env:GITHUB_STEP_SUMMARY
+        echo "- **Appcast XML**: $baseUrl/appcast.xml" >> $env:GITHUB_STEP_SUMMARY
+        echo "- **Release Notes**: $baseUrl/release-notes-default.html" >> $env:GITHUB_STEP_SUMMARY
