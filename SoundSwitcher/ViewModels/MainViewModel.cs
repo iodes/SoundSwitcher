@@ -126,7 +126,7 @@ public class MainViewModel : ViewModelBase
         set => SetProperty(ref field, value);
     }
 
-    public string AppVersion => $"v{Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "1.0.0"}";
+    public string AppVersion => $"{Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "1.0.0.0"}";
 
     public ICommand AddProfileCommand { get; }
 
