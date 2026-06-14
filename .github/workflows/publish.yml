@@ -22,7 +22,7 @@ jobs:
 
     steps:
     - name: Checkout Code
-      uses: actions/checkout@v5
+      uses: actions/checkout@v6.0.3
       with:
         fetch-depth: 0
 
@@ -76,7 +76,7 @@ jobs:
         }
 
     - name: Setup .NET
-      uses: actions/setup-dotnet@v5
+      uses: actions/setup-dotnet@v5.3.0
       with:
         dotnet-version: '10.x'
 
@@ -114,19 +114,6 @@ jobs:
         
         Remove-Item $privateKeyPath
 
-    - name: Create GitHub Release
-      id: create_release
-      uses: softprops/action-gh-release@v3
-      with:
-        name: SoundSwitcher ${{ env.APP_VERSION }}
-        tag_name: ${{ env.RELEASE_TAG }}
-        files: |
-          SoundSwitcher-*-Portable.zip
-          Installer/Output/SoundSwitcher-*-Setup.exe
-        generate_release_notes: true
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
     - name: Prepare Appcast and Release Notes
       shell: pwsh
       run: |
@@ -144,8 +131,8 @@ jobs:
             $langs = @()
         }
         if (-not $langs) { $langs = @("en-US") }
-        $combinedHtml = "<html><head><meta charset='utf-8'><style>body{font-family:sans-serif;} .lang-content{display:none;}</style>"
-        $combinedHtml += "<script>window.onload = function() { var lang = (navigator.language || navigator.userLanguage || 'en').substring(0,2); var el = document.getElementById('content-' + lang); if (el) { el.style.display = 'block'; } else { var def = document.getElementById('content-en'); if(def) def.style.display = 'block'; else { var first = document.querySelector('.lang-content'); if(first) first.style.display = 'block'; } } };</script></head><body><h2>SoundSwitcher $version</h2>"
+        $combinedHtml = "<html><head><meta charset='utf-8'><style>body{font-family:'Segoe UI',sans-serif;font-size:12px;line-height:1.5;color:#333;} .lang-content{display:none;} h1{font-size:1.3em;border-bottom:1px solid #ddd;padding-bottom:5px;margin-top:0;} h2{font-size:1.15em;} h3{font-size:1em;} ul{padding-left:20px;margin-top:5px;} li{margin-bottom:5px;}</style>"
+        $combinedHtml += "<script>window.onload = function() { var lang = (navigator.language || navigator.userLanguage || 'en').substring(0,2); var el = document.getElementById('content-' + lang); if (el) { el.style.display = 'block'; } else { var def = document.getElementById('content-en'); if(def) def.style.display = 'block'; else { var first = document.querySelector('.lang-content'); if(first) first.style.display = 'block'; } } };</script></head><body>"
         
         foreach ($lang in $langs) {
             $versionFile = "ReleaseNotes/${{ env.RELEASE_TAG }}/${lang}.md"
@@ -225,6 +212,19 @@ jobs:
     - name: Deploy to GitHub Pages
       id: deployment
       uses: actions/deploy-pages@v5.0.0
+
+    - name: Create GitHub Release
+      id: create_release
+      uses: softprops/action-gh-release@v3.0.0
+      with:
+        name: SoundSwitcher ${{ env.APP_VERSION }}
+        tag_name: ${{ env.RELEASE_TAG }}
+        files: |
+          SoundSwitcher-*-Portable.zip
+          Installer/Output/SoundSwitcher-*-Setup.exe
+        generate_release_notes: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Write Job Summary
       run: |
