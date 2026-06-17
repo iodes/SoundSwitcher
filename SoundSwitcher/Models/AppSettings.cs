@@ -41,6 +41,11 @@ public class AppSettings
     public bool SwitchCommunicationDevice { get; set; } = false;
 
     /// <summary>
+    /// Whether to show unavailable or unplugged devices in the device selection lists.
+    /// </summary>
+    public bool ShowUnavailableDevices { get; set; } = false;
+
+    /// <summary>
     /// Whether to show a notification when the profile is changed.
     /// </summary>
     public bool ShowProfileChangeNotification { get; set; } = true;

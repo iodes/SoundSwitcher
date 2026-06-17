@@ -30,4 +30,10 @@
   <data name="DeviceSwitched" xml:space="preserve">
     <value>デバイスが切り替わりました</value>
   </data>
+  <data name="ShowUnavailableDevices" xml:space="preserve">
+    <value>利用できないデバイスを表示</value>
+  </data>
+  <data name="ShowUnavailableDevicesDesc" xml:space="preserve">
+    <value>切断されている、または利用できないオーディオデバイスもリストに表示します。</value>
+  </data>
 </root>

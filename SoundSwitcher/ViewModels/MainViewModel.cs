@@ -21,6 +21,7 @@ public class MainViewModel : ViewModelBase
     private bool _runAtStartup;
     private bool _showProfileIconInTray;
     private bool _showProfileChangeNotification;
+    private bool _showUnavailableDevices;
     private string _language = string.Empty;
 
     public class LanguageOption(string code, string name) : ViewModelBase
@@ -93,6 +94,19 @@ public class MainViewModel : ViewModelBase
         }
     }
 
+    public bool ShowUnavailableDevices
+    {
+        get => _showUnavailableDevices;
+        set
+        {
+            if (SetProperty(ref _showUnavailableDevices, value))
+            {
+                SaveSettings();
+                Application.Current.Dispatcher.Invoke(RefreshDevices);
+            }
+        }
+    }
+
     public string Language
     {
         get => _language;
@@ -148,9 +162,9 @@ public class MainViewModel : ViewModelBase
         AddProfileCommand = new RelayCommand(AddProfile);
         ClearFocusCommand = new RelayCommand(() => FocusedProfileId = null);
 
-        Profiles.CollectionChanged += (_, _) => SaveSettings();
-
         LoadSettings();
+
+        Profiles.CollectionChanged += (_, _) => SaveSettings();
         RefreshDevices();
 
         // Auto-refresh when devices change
@@ -172,8 +186,10 @@ public class MainViewModel : ViewModelBase
         _runAtStartup = settings.RunAtStartup;
         _showProfileIconInTray = settings.ShowProfileIconInTray;
         _showProfileChangeNotification = settings.ShowProfileChangeNotification;
+        _showUnavailableDevices = settings.ShowUnavailableDevices;
         _language = settings.Language;
         OnPropertyChanged(nameof(Language));
+        OnPropertyChanged(nameof(ShowUnavailableDevices));
 
         Profiles.Clear();
 
@@ -192,12 +208,16 @@ public class MainViewModel : ViewModelBase
     {
         List<AudioDeviceInfo> devices = _audioService.GetActiveDevices();
 
-        List<AudioDeviceInfo> currentPlayback = devices.Where(d => d.DeviceType == AudioDeviceType.Playback)
+        var selectedDeviceIds = new HashSet<string>(
+            Profiles.Select(p => p.PlaybackDeviceId).Concat(Profiles.Select(p => p.CaptureDeviceId)).OfType<string>()
+        );
+
+        List<AudioDeviceInfo> currentPlayback = devices.Where(d => d.DeviceType == AudioDeviceType.Playback && (d.IsActive || ShowUnavailableDevices || selectedDeviceIds.Contains(d.DeviceId)))
             .OrderBy(d => ParseDeviceName(d.Name).DeviceDescription)
             .ThenBy(d => ParseDeviceName(d.Name).EndpointName)
             .ToList();
 
-        List<AudioDeviceInfo> currentCapture = devices.Where(d => d.DeviceType == AudioDeviceType.Capture)
+        List<AudioDeviceInfo> currentCapture = devices.Where(d => d.DeviceType == AudioDeviceType.Capture && (d.IsActive || ShowUnavailableDevices || selectedDeviceIds.Contains(d.DeviceId)))
             .OrderBy(d => ParseDeviceName(d.Name).DeviceDescription)
             .ThenBy(d => ParseDeviceName(d.Name).EndpointName)
             .ToList();
@@ -299,9 +319,8 @@ public class MainViewModel : ViewModelBase
         pvm.DeleteRequested += OnProfileDeleteRequested;
         pvm.DeviceApplyRequested += OnProfileApplyRequested;
         pvm.ToggleDefaultRequested += OnProfileToggleDefaultRequested;
-        Profiles.Add(pvm); // Add to the end of the list
+        Profiles.Add(pvm); // Add to the end of the list (triggers SaveSettings)
         Log.Information("Created new profile {ProfileId}", newProfile.Id);
-        SaveSettings();
     }
 
     private void OnProfileDeleteRequested(DeviceProfileViewModel pvm)
@@ -316,7 +335,6 @@ public class MainViewModel : ViewModelBase
             IconCacheService.DeleteIcon(pvm.IconPath);
         }
 
-        Profiles.Remove(pvm);
         Log.Information("Deleted profile {ProfileId}", pvm.Id);
 
         _switchingService.ClearPendingProfile(pvm.Id);
@@ -334,7 +352,8 @@ public class MainViewModel : ViewModelBase
             }
         });
 
-        SaveSettings();
+        // This triggers CollectionChanged -> SaveSettings, handling the final save
+        Profiles.Remove(pvm);
     }
 
     private void OnProfileToggleDefaultRequested(DeviceProfileViewModel pvm)
@@ -374,8 +393,9 @@ public class MainViewModel : ViewModelBase
         var activeProfile = _switchingService.GetCurrentActiveProfile();
 
         // Even if the devices are already matching, if the logical 'active profile' does not match 
-        // (e.g. a newly created profile), we proceed with the switching logic to update LastSelectedProfileId.
-        if (!needsSwitch && activeProfile?.Id == model.Id)
+        // (e.g. a newly created profile), or if there is a pending profile that needs to be cleared,
+        // we proceed with the switching logic.
+        if (!needsSwitch && activeProfile?.Id == model.Id && _switchingService.PendingProfileId == null)
             return;
 
         _switchingService.SwitchToProfile(model);
@@ -383,7 +403,17 @@ public class MainViewModel : ViewModelBase
 
     public void SaveSettings()
     {
-        // Update states before saving, in case PlaybackDeviceId changed and we need a new fallback icon
+        _settingsService.Update(settings =>
+        {
+            settings.SwitchCommunicationDevice = SwitchCommunicationDevice;
+            settings.RunAtStartup = RunAtStartup;
+            settings.ShowProfileIconInTray = ShowProfileIconInTray;
+            settings.ShowProfileChangeNotification = ShowProfileChangeNotification;
+            settings.ShowUnavailableDevices = ShowUnavailableDevices;
+            settings.Language = Language;
+            settings.DeviceProfiles = Profiles.Select(p => p.GetModel()).ToList();
+        });
+
         var activeProfileModel = _switchingService.GetCurrentActiveProfile();
 
         foreach (var profile in Profiles)
@@ -393,16 +423,6 @@ public class MainViewModel : ViewModelBase
             var playbackDevice = AvailablePlaybackDevices.FirstOrDefault(d => d.DeviceId == profile.PlaybackDeviceId);
             profile.FallbackDeviceIcon = playbackDevice?.DeviceIcon;
         }
-
-        _settingsService.Update(settings =>
-        {
-            settings.SwitchCommunicationDevice = SwitchCommunicationDevice;
-            settings.RunAtStartup = RunAtStartup;
-            settings.ShowProfileIconInTray = ShowProfileIconInTray;
-            settings.ShowProfileChangeNotification = ShowProfileChangeNotification;
-            settings.Language = Language;
-            settings.DeviceProfiles = Profiles.Select(p => p.GetModel()).ToList();
-        });
 
         SettingsChanged?.Invoke();
     }

@@ -27,13 +27,14 @@ public class DeviceProfileViewModel : ViewModelBase
 
             if (SetProperty(ref _playbackDeviceId, value))
             {
+                bool wasActive = IsActive || IsPending;
                 _profile.PlaybackDeviceId = value;
                 OnPropertyChanged(nameof(DisplayName));
 
-                if (IsActive || IsPending)
-                    DeviceApplyRequested?.Invoke(this);
-
                 ProfileChanged?.Invoke();
+
+                if (wasActive)
+                    DeviceApplyRequested?.Invoke(this);
             }
         }
     }
@@ -52,10 +53,10 @@ public class DeviceProfileViewModel : ViewModelBase
                 _profile.CaptureDeviceId = value;
                 OnPropertyChanged(nameof(DisplayName));
 
+                ProfileChanged?.Invoke();
+
                 if (wasActive && value != null)
                     DeviceApplyRequested?.Invoke(this);
-
-                ProfileChanged?.Invoke();
             }
         }
     }

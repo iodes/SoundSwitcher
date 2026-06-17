@@ -30,4 +30,10 @@ Please close it before opening another device's properties.</value>
   <data name="DeviceSwitched" xml:space="preserve">
     <value>Device Switched</value>
   </data>
+  <data name="ShowUnavailableDevices" xml:space="preserve">
+    <value>Show Unavailable Devices</value>
+  </data>
+  <data name="ShowUnavailableDevicesDesc" xml:space="preserve">
+    <value>Show disconnected or unavailable audio devices in the list.</value>
+  </data>
 </root>

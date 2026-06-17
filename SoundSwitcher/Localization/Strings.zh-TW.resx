@@ -30,4 +30,10 @@
   <data name="DeviceSwitched" xml:space="preserve">
     <value>裝置已切換</value>
   </data>
+  <data name="ShowUnavailableDevices" xml:space="preserve">
+    <value>顯示不可用裝置</value>
+  </data>
+  <data name="ShowUnavailableDevicesDesc" xml:space="preserve">
+    <value>在清單中顯示已中斷連線或不可用的音訊裝置。</value>
+  </data>
 </root>

@@ -30,4 +30,10 @@
   <data name="DeviceSwitched" xml:space="preserve">
     <value>장치 전환됨</value>
   </data>
+  <data name="ShowUnavailableDevices" xml:space="preserve">
+    <value>사용할 수 없는 장치 표시</value>
+  </data>
+  <data name="ShowUnavailableDevicesDesc" xml:space="preserve">
+    <value>연결이 해제되었거나 사용할 수 없는 오디오 장치도 목록에 표시합니다.</value>
+  </data>
 </root>

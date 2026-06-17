@@ -71,6 +71,21 @@
             </controls:CardToggleSwitch.Header>
         </controls:CardToggleSwitch>
 
+        <controls:CardToggleSwitch IsChecked="{Binding ShowUnavailableDevices, Mode=TwoWay}">
+            <controls:CardToggleSwitch.Icon>
+                <ui:SymbolIcon Symbol="Eye24" />
+            </controls:CardToggleSwitch.Icon>
+            <controls:CardToggleSwitch.Header>
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock
+                        FontSize="13"
+                        FontWeight="Medium"
+                        Text="{Binding Source={x:Static loc:LocalizationManager.Instance}, Path=[ShowUnavailableDevices]}" />
+                    <TextBlock FontSize="12" Text="{Binding Source={x:Static loc:LocalizationManager.Instance}, Path=[ShowUnavailableDevicesDesc]}" />
+                </StackPanel>
+            </controls:CardToggleSwitch.Header>
+        </controls:CardToggleSwitch>
+
         <controls:CardToggleSwitch IsChecked="{Binding ShowProfileIconInTray, Mode=TwoWay}">
             <controls:CardToggleSwitch.Icon>
                 <ui:SymbolIcon Symbol="Image24" />
