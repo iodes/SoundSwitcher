@@ -45,15 +45,6 @@ public partial class App
         if (Current is App app)
             app.UpdateTrayIcon();
     }
-
-    /// <summary>
-    /// Called when profile changes to show the notification toast.
-    /// </summary>
-    public static void NotifyProfileChanged(Models.DeviceProfile profile)
-    {
-        if (Current is App app)
-            app.ShowProfileNotification(profile);
-    }
     #endregion
 
     #region Startup / Exit
@@ -128,6 +119,16 @@ public partial class App
         ViewModel.SettingsChanged += NotifySettingsChanged;
 
         AudioService.DevicesChanged += () =>
+        {
+            Dispatcher.Invoke(UpdateTrayIcon);
+        };
+
+        SwitchingService.ProfileSwitched += profile =>
+        {
+            Dispatcher.Invoke(() => ShowProfileNotification(profile));
+        };
+
+        SwitchingService.PendingProfileChanged += () =>
         {
             Dispatcher.Invoke(UpdateTrayIcon);
         };
@@ -296,13 +297,7 @@ public partial class App
             }
         }
 
-        var switchedProfile = SwitchingService.SwitchToNextProfile();
-
-        if (switchedProfile == null)
-            return;
-
-        UpdateTrayIcon();
-        ShowProfileNotification(switchedProfile);
+        SwitchingService.SwitchToNextProfile();
     }
 
     private void ShowProfileNotification(Models.DeviceProfile profile)
@@ -359,7 +354,7 @@ public partial class App
     {
         var activeProfile = SwitchingService.GetCurrentActiveProfile();
 
-        if (activeProfile == null)
+        if (activeProfile == null && SwitchingService.PendingProfileId == null)
         {
             _taskbarIcon.ToolTipText = "SoundSwitcher - " + Localization.LocalizationManager.Instance["TrayNoDevice"];
             _taskbarIcon.ClearValue(TaskbarIcon.IconSourceProperty);
@@ -369,24 +364,69 @@ public partial class App
 
         string tooltip = "SoundSwitcher";
 
-        if (activeProfile.PlaybackDeviceId != null)
+        if (SwitchingService.PendingProfileId != null)
         {
-            var pName = AudioService.GetDeviceName(activeProfile.PlaybackDeviceId);
-            if (!string.IsNullOrEmpty(pName)) tooltip += $"\n🔊 {pName}";
-        }
+            // If there is a pending profile, show the pending profile's devices instead of the active profile.
+            // Use the hourglass icon (⏳) only for devices that are actually inactive (pending).
+            var settings = SettingsService.Load();
+            var pendingProfile = settings.DeviceProfiles.FirstOrDefault(p => p.Id == SwitchingService.PendingProfileId);
 
-        if (activeProfile.CaptureDeviceId != null)
+            if (pendingProfile != null)
+            {
+                if (pendingProfile.PlaybackDeviceId != null)
+                {
+                    var pName = AudioService.GetDeviceName(pendingProfile.PlaybackDeviceId);
+
+                    if (!string.IsNullOrEmpty(pName))
+                    {
+                        string icon = AudioService.IsDeviceActive(pendingProfile.PlaybackDeviceId) ? "🔊" : "⏳";
+                        tooltip += $"\n{icon} {pName}";
+                    }
+                }
+
+                if (pendingProfile.CaptureDeviceId != null)
+                {
+                    var cName = AudioService.GetDeviceName(pendingProfile.CaptureDeviceId);
+
+                    if (!string.IsNullOrEmpty(cName))
+                    {
+                        string icon = AudioService.IsDeviceActive(pendingProfile.CaptureDeviceId) ? "🎤" : "⏳";
+                        tooltip += $"\n{icon} {cName}";
+                    }
+                }
+            }
+        }
+        else if (activeProfile != null)
         {
-            var cName = AudioService.GetDeviceName(activeProfile.CaptureDeviceId);
-            if (!string.IsNullOrEmpty(cName)) tooltip += $"\n🎤 {cName}";
+            // Show the currently active profile's devices when not pending
+            if (activeProfile.PlaybackDeviceId != null)
+            {
+                var pName = AudioService.GetDeviceName(activeProfile.PlaybackDeviceId);
+                if (!string.IsNullOrEmpty(pName)) tooltip += $"\n🔊 {pName}";
+            }
+
+            if (activeProfile.CaptureDeviceId != null)
+            {
+                var cName = AudioService.GetDeviceName(activeProfile.CaptureDeviceId);
+                if (!string.IsNullOrEmpty(cName)) tooltip += $"\n🎤 {cName}";
+            }
         }
 
         _taskbarIcon.ToolTipText = tooltip;
 
         // Check if user enabled profile icon in tray
-        var settings = SettingsService.Load();
+        var finalSettings = SettingsService.Load();
 
-        if (!settings.ShowProfileIconInTray)
+        if (!finalSettings.ShowProfileIconInTray || (activeProfile == null && SwitchingService.PendingProfileId == null))
+        {
+            _taskbarIcon.ClearValue(TaskbarIcon.IconSourceProperty);
+            _taskbarIcon.Icon = GetAppIcon();
+            return;
+        }
+
+        var profileForIcon = activeProfile ?? finalSettings.DeviceProfiles.FirstOrDefault(p => p.Id == SwitchingService.PendingProfileId);
+
+        if (profileForIcon == null)
         {
             _taskbarIcon.ClearValue(TaskbarIcon.IconSourceProperty);
             _taskbarIcon.Icon = GetAppIcon();
@@ -394,7 +434,7 @@ public partial class App
         }
 
         // Try loading user-configured custom icon
-        string? fullIconPath = IconCacheService.GetIconFullPath(activeProfile.IconPath);
+        string? fullIconPath = IconCacheService.GetIconFullPath(profileForIcon.IconPath);
 
         if (fullIconPath != null)
         {
@@ -417,7 +457,7 @@ public partial class App
         }
 
         // Fallback to Native Device Icon
-        var fallbackDevice = ViewModel.AvailablePlaybackDevices.FirstOrDefault(d => d.DeviceId == activeProfile.PlaybackDeviceId);
+        var fallbackDevice = ViewModel.AvailablePlaybackDevices.FirstOrDefault(d => d.DeviceId == profileForIcon.PlaybackDeviceId);
 
         if (fallbackDevice?.DeviceIcon != null)
         {

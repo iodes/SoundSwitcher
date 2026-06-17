@@ -9,6 +9,13 @@ public class DeviceSwitchingService
 {
     private readonly AudioDeviceService _audioService;
     private readonly SettingsService _settingsService;
+    private bool _isSwitching;
+
+    public Guid? PendingProfileId { get; private set; }
+
+    public event Action<DeviceProfile>? ProfileSwitched;
+
+    public event Action? PendingProfileChanged;
 
     public DeviceSwitchingService(AudioDeviceService audioService, SettingsService settingsService)
     {
@@ -20,47 +27,62 @@ public class DeviceSwitchingService
 
     private void OnDevicesChanged()
     {
+        if (_isSwitching)
+            return;
+
         var settings = _settingsService.Load();
 
-        if (settings.LastSelectedProfileId != null)
+        if (PendingProfileId != null)
+        {
+            var pendingProfile = settings.DeviceProfiles.FirstOrDefault(p => p.Id == PendingProfileId);
+
+            if (pendingProfile != null && IsProfileFullyActive(pendingProfile))
+            {
+                // The pending profile is now fully available. Apply it!
+                PendingProfileId = null;
+                PendingProfileChanged?.Invoke();
+
+                ApplyProfile(pendingProfile, settings.SwitchCommunicationDevice);
+                UpdateLastSelectedProfileId(pendingProfile.Id);
+                ProfileSwitched?.Invoke(pendingProfile);
+            }
+        }
+
+        if (settings.LastSelectedProfileId != null && PendingProfileId == null)
         {
             var activeProfile = GetCurrentActiveProfile();
 
             if (activeProfile == null)
             {
-                settings.LastSelectedProfileId = null;
-                _settingsService.Save(settings);
+                var lastProfile = settings.DeviceProfiles.FirstOrDefault(p => p.Id == settings.LastSelectedProfileId);
+
+                // If the profile became inactive (e.g. device unplugged), put it into pending state.
+                if (lastProfile != null && !IsProfileFullyActive(lastProfile))
+                {
+                    PendingProfileId = lastProfile.Id;
+                    PendingProfileChanged?.Invoke();
+                }
+                else
+                {
+                    // Otherwise (e.g. user manually changed default device via Windows), clear the selected profile.
+                    _settingsService.Update(s => s.LastSelectedProfileId = null);
+                }
             }
         }
     }
 
-    private bool IsProfileValid(DeviceProfile profile)
+    private bool IsProfileFullyActive(DeviceProfile profile)
     {
-        bool hasDevice = false;
+        if (!string.IsNullOrEmpty(profile.PlaybackDeviceId) && !_audioService.IsDeviceActive(profile.PlaybackDeviceId))
+            return false;
 
-        if (!string.IsNullOrEmpty(profile.PlaybackDeviceId))
-        {
-            hasDevice = true;
-
-            if (!_audioService.IsDeviceActive(profile.PlaybackDeviceId))
-                return false;
-        }
-
-        if (!string.IsNullOrEmpty(profile.CaptureDeviceId))
-        {
-            hasDevice = true;
-
-            if (!_audioService.IsDeviceActive(profile.CaptureDeviceId))
-                return false;
-        }
-
-        return hasDevice;
+        return string.IsNullOrEmpty(profile.CaptureDeviceId) || _audioService.IsDeviceActive(profile.CaptureDeviceId);
     }
 
     /// <summary>
-    /// Determines the next profile to switch to and performs the switch.
+    /// Determines the next profile to switch to and performs the switch or sets it as pending.
     /// </summary>
-    /// <returns>The switched profile, or null if no profiles exist or none are valid.</returns>
+    /// <returns>The switched or pending profile, or null if no profiles exist.</returns>
     public DeviceProfile? SwitchToNextProfile()
     {
         var settings = _settingsService.Load();
@@ -69,43 +91,52 @@ public class DeviceSwitchingService
         if (profiles.Count == 0)
             return null;
 
-        var currentActive = GetCurrentActiveProfile();
-        int currentIndex = currentActive != null ? profiles.FindIndex(p => p.Id == currentActive.Id) : -1;
+        var currentActiveId = PendingProfileId ?? GetCurrentActiveProfile()?.Id;
+        int currentIndex = currentActiveId != null ? profiles.FindIndex(p => p.Id == currentActiveId) : -1;
 
-        int startIndex = (currentIndex + 1) % profiles.Count;
-        int nextIndex = startIndex;
+        int nextIndex = (currentIndex + 1) % profiles.Count;
+        var nextProfile = profiles[nextIndex];
 
-        do
-        {
-            var nextProfile = profiles[nextIndex];
-
-            if (IsProfileValid(nextProfile))
-            {
-                SwitchToProfile(nextProfile);
-                return nextProfile;
-            }
-
-            nextIndex = (nextIndex + 1) % profiles.Count;
-        } while (nextIndex != startIndex);
-
-        return null;
+        SwitchToProfile(nextProfile);
+        return nextProfile;
     }
 
     /// <summary>
-    /// Switches to the specified profile and updates the last selected profile ID.
+    /// Switches to the specified profile, or marks it as pending if devices are inactive.
     /// </summary>
     public void SwitchToProfile(DeviceProfile profile)
     {
-        var settings = _settingsService.Load();
-        ApplyProfile(profile, settings.SwitchCommunicationDevice);
-        UpdateLastSelectedProfileId(profile.Id);
+        _isSwitching = true;
+
+        try
+        {
+            var settings = _settingsService.Load();
+
+            if (IsProfileFullyActive(profile))
+            {
+                UpdateLastSelectedProfileId(profile.Id);
+                ApplyProfile(profile, settings.SwitchCommunicationDevice);
+
+                PendingProfileId = null;
+                PendingProfileChanged?.Invoke();
+                ProfileSwitched?.Invoke(profile);
+            }
+            else
+            {
+                UpdateLastSelectedProfileId(profile.Id);
+                PendingProfileId = profile.Id;
+                PendingProfileChanged?.Invoke();
+            }
+        }
+        finally
+        {
+            _isSwitching = false;
+        }
     }
 
     private void UpdateLastSelectedProfileId(Guid id)
     {
-        var settings = _settingsService.Load();
-        settings.LastSelectedProfileId = id;
-        _settingsService.Save(settings);
+        _settingsService.Update(s => s.LastSelectedProfileId = id);
     }
 
     private void ApplyProfile(DeviceProfile profile, bool switchCommunication)

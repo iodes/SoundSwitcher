@@ -175,6 +175,22 @@
                                                             Foreground="White"
                                                             Symbol="Checkmark12" />
                                                     </Grid>
+                                                    
+                                                    <!--  Pending Spinner Overlay  -->
+                                                    <Grid
+                                                        Margin="0,0,-4,-4"
+                                                        HorizontalAlignment="Right"
+                                                        VerticalAlignment="Bottom"
+                                                        Visibility="{Binding IsPending, Converter={StaticResource BoolToVis}}">
+                                                        <Ellipse
+                                                            Width="16"
+                                                            Height="16"
+                                                            Fill="{DynamicResource ControlFillColorDefaultBrush}" />
+                                                        <ui:ProgressRing
+                                                            Width="16"
+                                                            Height="16"
+                                                            IsIndeterminate="True" />
+                                                    </Grid>
                                                 </Grid>
                                             </Border>
                                         </Grid>

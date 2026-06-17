@@ -1,6 +1,7 @@
 using SoundSwitcher.Models;
 using System.IO;
 using System.Text.Json;
+using System.Threading;
 
 namespace SoundSwitcher.Services;
 
@@ -19,24 +20,30 @@ public class SettingsService
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase
     };
 
+    // .NET 9+ modern Lock object for thread safety
+    private static readonly Lock _fileLock = new();
+
     /// <summary>
     /// Loads settings from the settings file. Returns defaults if the file does not exist.
     /// </summary>
     public AppSettings Load()
     {
-        try
+        lock (_fileLock)
         {
-            if (!File.Exists(SettingsFilePath))
+            try
+            {
+                if (!File.Exists(SettingsFilePath))
+                {
+                    return new AppSettings();
+                }
+
+                var json = File.ReadAllText(SettingsFilePath);
+                return JsonSerializer.Deserialize<AppSettings>(json, JsonOptions) ?? new AppSettings();
+            }
+            catch
             {
                 return new AppSettings();
             }
-
-            var json = File.ReadAllText(SettingsFilePath);
-            return JsonSerializer.Deserialize<AppSettings>(json, JsonOptions) ?? new AppSettings();
-        }
-        catch
-        {
-            return new AppSettings();
         }
     }
 
@@ -45,8 +52,24 @@ public class SettingsService
     /// </summary>
     public void Save(AppSettings settings)
     {
-        Directory.CreateDirectory(SettingsFolder);
-        var json = JsonSerializer.Serialize(settings, JsonOptions);
-        File.WriteAllText(SettingsFilePath, json);
+        lock (_fileLock)
+        {
+            Directory.CreateDirectory(SettingsFolder);
+            var json = JsonSerializer.Serialize(settings, JsonOptions);
+            File.WriteAllText(SettingsFilePath, json);
+        }
+    }
+
+    /// <summary>
+    /// Atomically loads, updates, and saves settings.
+    /// </summary>
+    public void Update(Action<AppSettings> modifier)
+    {
+        lock (_fileLock)
+        {
+            var settings = Load();
+            modifier(settings);
+            Save(settings);
+        }
     }
 }

@@ -152,6 +152,12 @@ public class DeviceProfileViewModel : ViewModelBase
         set => SetProperty(ref field, value);
     }
 
+    public bool IsPending
+    {
+        get;
+        set => SetProperty(ref field, value);
+    }
+
     public bool IsDefaultProfile
     {
         get;

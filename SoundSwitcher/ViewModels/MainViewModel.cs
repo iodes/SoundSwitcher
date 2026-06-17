@@ -156,6 +156,11 @@ public class MainViewModel : ViewModelBase
         {
             System.Windows.Application.Current.Dispatcher.Invoke(RefreshDevices);
         };
+
+        _switchingService.PendingProfileChanged += () =>
+        {
+            System.Windows.Application.Current.Dispatcher.Invoke(RefreshDevices);
+        };
     }
 
     private void LoadSettings()
@@ -203,6 +208,7 @@ public class MainViewModel : ViewModelBase
         foreach (var profile in Profiles)
         {
             profile.IsActive = activeProfileModel != null && profile.Id == activeProfileModel.Id;
+            profile.IsPending = _switchingService.PendingProfileId == profile.Id;
 
             var playbackDevice = AvailablePlaybackDevices.FirstOrDefault(d => d.DeviceId == profile.PlaybackDeviceId);
             profile.FallbackDeviceIcon = playbackDevice?.DeviceIcon;
@@ -309,48 +315,41 @@ public class MainViewModel : ViewModelBase
 
         Profiles.Remove(pvm);
 
-        var oldSettings = _settingsService.Load();
-
-        bool oldSettingsModified = false;
-
-        if (oldSettings.LastSelectedProfileId == pvm.Id)
+        _settingsService.Update(settings =>
         {
-            oldSettings.LastSelectedProfileId = null;
-            oldSettingsModified = true;
-        }
+            if (settings.LastSelectedProfileId == pvm.Id)
+            {
+                settings.LastSelectedProfileId = null;
+            }
 
-        if (oldSettings.DefaultProfileId == pvm.Id)
-        {
-            oldSettings.DefaultProfileId = null;
-            oldSettingsModified = true;
-        }
-
-        if (oldSettingsModified)
-        {
-            _settingsService.Save(oldSettings);
-        }
+            if (settings.DefaultProfileId == pvm.Id)
+            {
+                settings.DefaultProfileId = null;
+            }
+        });
 
         SaveSettings();
     }
 
     private void OnProfileToggleDefaultRequested(DeviceProfileViewModel pvm)
     {
-        var oldSettings = _settingsService.Load();
-
-        if (oldSettings.DefaultProfileId == pvm.Id)
+        _settingsService.Update(settings =>
         {
-            oldSettings.DefaultProfileId = null;
-        }
-        else
-        {
-            oldSettings.DefaultProfileId = pvm.Id;
-        }
+            if (settings.DefaultProfileId == pvm.Id)
+            {
+                settings.DefaultProfileId = null;
+            }
+            else
+            {
+                settings.DefaultProfileId = pvm.Id;
+            }
+        });
 
-        _settingsService.Save(oldSettings);
+        var updatedSettings = _settingsService.Load();
 
         foreach (var profile in Profiles)
         {
-            profile.IsDefaultProfile = oldSettings.DefaultProfileId == profile.Id;
+            profile.IsDefaultProfile = updatedSettings.DefaultProfileId == profile.Id;
         }
     }
 
@@ -372,7 +371,6 @@ public class MainViewModel : ViewModelBase
             return;
 
         _switchingService.SwitchToProfile(model);
-        App.NotifyProfileChanged(model);
     }
 
     public void SaveSettings()
@@ -383,25 +381,21 @@ public class MainViewModel : ViewModelBase
         foreach (var profile in Profiles)
         {
             profile.IsActive = activeProfileModel != null && profile.Id == activeProfileModel.Id;
+            profile.IsPending = _switchingService.PendingProfileId == profile.Id;
             var playbackDevice = AvailablePlaybackDevices.FirstOrDefault(d => d.DeviceId == profile.PlaybackDeviceId);
             profile.FallbackDeviceIcon = playbackDevice?.DeviceIcon;
         }
 
-        var oldSettings = _settingsService.Load();
-
-        var settings = new AppSettings
+        _settingsService.Update(settings =>
         {
-            DefaultProfileId = oldSettings.DefaultProfileId,
-            LastSelectedProfileId = oldSettings.LastSelectedProfileId,
-            SwitchCommunicationDevice = SwitchCommunicationDevice,
-            RunAtStartup = RunAtStartup,
-            ShowProfileIconInTray = ShowProfileIconInTray,
-            ShowProfileChangeNotification = ShowProfileChangeNotification,
-            Language = Language,
-            DeviceProfiles = Profiles.Select(p => p.GetModel()).ToList()
-        };
+            settings.SwitchCommunicationDevice = SwitchCommunicationDevice;
+            settings.RunAtStartup = RunAtStartup;
+            settings.ShowProfileIconInTray = ShowProfileIconInTray;
+            settings.ShowProfileChangeNotification = ShowProfileChangeNotification;
+            settings.Language = Language;
+            settings.DeviceProfiles = Profiles.Select(p => p.GetModel()).ToList();
+        });
 
-        _settingsService.Save(settings);
         SettingsChanged?.Invoke();
     }
 
