@@ -1,3 +1,4 @@
+using Serilog;
 using SoundSwitcher.Models;
 using SoundSwitcher.Services;
 using System.Windows.Input;
@@ -240,6 +241,7 @@ public class DeviceProfileViewModel : ViewModelBase
 
                     string newCachePath = IconCacheService.CacheIcon(dialog.FileName);
                     IconPath = newCachePath;
+                    Log.Information("Changed icon for profile {ProfileId}", Id);
                 }
                 catch (Exception)
                 {
@@ -254,6 +256,7 @@ public class DeviceProfileViewModel : ViewModelBase
             {
                 IconCacheService.DeleteIcon(IconPath);
                 IconPath = null;
+                Log.Information("Reset icon for profile {ProfileId}", Id);
             }
         });
 

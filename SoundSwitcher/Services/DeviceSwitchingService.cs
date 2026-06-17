@@ -1,3 +1,4 @@
+using Serilog;
 using SoundSwitcher.Models;
 
 namespace SoundSwitcher.Services;
@@ -21,8 +22,10 @@ public class DeviceSwitchingService
     {
         _audioService = audioService;
         _settingsService = settingsService;
-
         _audioService.DevicesChanged += OnDevicesChanged;
+
+        // Restore pending state or clear inactive profile on startup
+        CheckAndRestoreLastSelectedProfile(isStartup: true);
     }
 
     private void OnDevicesChanged()
@@ -39,6 +42,11 @@ public class DeviceSwitchingService
             if (pendingProfile != null && IsProfileFullyActive(pendingProfile))
             {
                 // The pending profile is now fully available. Apply it!
+                var details = GetProfileDeviceDetails(pendingProfile);
+
+                Log.Information("Resuming profile {ProfileId} (Devices became active) -> Playback: {PlaybackName} [{@PlaybackId}] {PlaybackStatus}, Capture: {CaptureName} [{@CaptureId}] {CaptureStatus}",
+                    pendingProfile.Id, details.PlaybackName, pendingProfile.PlaybackDeviceId, details.PlaybackStatus, details.CaptureName, pendingProfile.CaptureDeviceId, details.CaptureStatus);
+
                 PendingProfileId = null;
                 PendingProfileChanged?.Invoke();
 
@@ -47,6 +55,13 @@ public class DeviceSwitchingService
                 ProfileSwitched?.Invoke(pendingProfile);
             }
         }
+
+        CheckAndRestoreLastSelectedProfile(isStartup: false);
+    }
+
+    private void CheckAndRestoreLastSelectedProfile(bool isStartup)
+    {
+        var settings = _settingsService.Load();
 
         if (settings.LastSelectedProfileId != null && PendingProfileId == null)
         {
@@ -59,6 +74,14 @@ public class DeviceSwitchingService
                 // If the profile became inactive (e.g. device unplugged), put it into pending state.
                 if (lastProfile != null && !IsProfileFullyActive(lastProfile))
                 {
+                    var details = GetProfileDeviceDetails(lastProfile);
+
+                    string actionVerb = isStartup ? "Restoring pending profile" : "Suspending profile";
+                    string reason = isStartup ? "App startup" : "Device disconnected";
+
+                    Log.Information("{ActionVerb} {ProfileId} ({Reason}) -> Playback: {PlaybackName} [{@PlaybackId}] {PlaybackStatus}, Capture: {CaptureName} [{@CaptureId}] {CaptureStatus}",
+                        actionVerb, lastProfile.Id, reason, details.PlaybackName, lastProfile.PlaybackDeviceId, details.PlaybackStatus, details.CaptureName, lastProfile.CaptureDeviceId, details.CaptureStatus);
+
                     PendingProfileId = lastProfile.Id;
                     PendingProfileChanged?.Invoke();
                 }
@@ -123,6 +146,11 @@ public class DeviceSwitchingService
             }
             else
             {
+                var details = GetProfileDeviceDetails(profile);
+
+                Log.Information("Pending profile {ProfileId} (Device not found) -> Playback: {PlaybackName} [{@PlaybackId}] {PlaybackStatus}, Capture: {CaptureName} [{@CaptureId}] {CaptureStatus}",
+                    profile.Id, details.PlaybackName, profile.PlaybackDeviceId, details.PlaybackStatus, details.CaptureName, profile.CaptureDeviceId, details.CaptureStatus);
+
                 UpdateLastSelectedProfileId(profile.Id);
                 PendingProfileId = profile.Id;
                 PendingProfileChanged?.Invoke();
@@ -141,6 +169,11 @@ public class DeviceSwitchingService
 
     private void ApplyProfile(DeviceProfile profile, bool switchCommunication)
     {
+        var details = GetProfileDeviceDetails(profile);
+
+        Log.Information("Switched to profile {ProfileId} -> Playback: {PlaybackName} [{@PlaybackId}] {PlaybackStatus}, Capture: {CaptureName} [{@CaptureId}] {CaptureStatus}",
+            profile.Id, details.PlaybackName, profile.PlaybackDeviceId, details.PlaybackStatus, details.CaptureName, profile.CaptureDeviceId, details.CaptureStatus);
+
         if (!string.IsNullOrEmpty(profile.PlaybackDeviceId))
         {
             // Ignore exception if device not found (e.g. unplugged)
@@ -187,5 +220,16 @@ public class DeviceSwitchingService
         }
 
         return null;
+    }
+
+    private (string PlaybackName, string PlaybackStatus, string CaptureName, string CaptureStatus) GetProfileDeviceDetails(DeviceProfile profile)
+    {
+        var playbackName = !string.IsNullOrEmpty(profile.PlaybackDeviceId) ? (_audioService.GetDeviceName(profile.PlaybackDeviceId) ?? "Unknown") : "None";
+        var playbackStatus = string.IsNullOrEmpty(profile.PlaybackDeviceId) ? "" : (_audioService.IsDeviceActive(profile.PlaybackDeviceId) ? "Active" : "Pending");
+
+        var captureName = !string.IsNullOrEmpty(profile.CaptureDeviceId) ? (_audioService.GetDeviceName(profile.CaptureDeviceId) ?? "Unknown") : "None";
+        var captureStatus = string.IsNullOrEmpty(profile.CaptureDeviceId) ? "" : (_audioService.IsDeviceActive(profile.CaptureDeviceId) ? "Active" : "Pending");
+
+        return (playbackName, playbackStatus, captureName, captureStatus);
     }
 }

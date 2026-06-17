@@ -1,3 +1,4 @@
+using Serilog;
 using SoundSwitcher.Models;
 using SoundSwitcher.Services;
 using System.Collections.ObjectModel;
@@ -298,6 +299,7 @@ public class MainViewModel : ViewModelBase
         pvm.DeviceApplyRequested += OnProfileApplyRequested;
         pvm.ToggleDefaultRequested += OnProfileToggleDefaultRequested;
         Profiles.Add(pvm); // Add to the end of the list
+        Log.Information("Created new profile {ProfileId}", newProfile.Id);
         SaveSettings();
     }
 
@@ -314,6 +316,7 @@ public class MainViewModel : ViewModelBase
         }
 
         Profiles.Remove(pvm);
+        Log.Information("Deleted profile {ProfileId}", pvm.Id);
 
         _settingsService.Update(settings =>
         {
@@ -338,10 +341,12 @@ public class MainViewModel : ViewModelBase
             if (settings.DefaultProfileId == pvm.Id)
             {
                 settings.DefaultProfileId = null;
+                Log.Information("Unset default profile (was {ProfileId})", pvm.Id);
             }
             else
             {
                 settings.DefaultProfileId = pvm.Id;
+                Log.Information("Set default profile to {ProfileId}", pvm.Id);
             }
         });
 

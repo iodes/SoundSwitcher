@@ -1,7 +1,9 @@
 using System.Drawing;
+using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using Hardcodet.Wpf.TaskbarNotification;
+using Serilog;
 using SoundSwitcher.Services;
 using SoundSwitcher.ViewModels;
 using SoundSwitcher.Controls;
@@ -48,8 +50,28 @@ public partial class App
     #endregion
 
     #region Startup / Exit
+    private void CurrentDomainOnUnhandledException(object sender, UnhandledExceptionEventArgs e)
+    {
+        if (e.ExceptionObject is Exception exception)
+        {
+            Log.Error(exception, "Unhandled exception occurred");
+            MessageBox.Show(exception.Message, "SoundSwitcher", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
     private void App_OnStartup(object sender, StartupEventArgs e)
     {
+        AppDomain.CurrentDomain.UnhandledException += CurrentDomainOnUnhandledException;
+
+        var logPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "SoundSwitcher", "logs", "log-.txt");
+
+        Log.Logger = new LoggerConfiguration()
+            .WriteTo.Console()
+            .WriteTo.File(logPath, rollingInterval: RollingInterval.Day)
+            .CreateLogger();
+
+        Log.Information("Application started");
+
         _mutex = new Mutex(true, "SoundSwitcher.App.Mutex", out bool createdNew);
 
         if (!createdNew)
@@ -177,11 +199,13 @@ public partial class App
             _mainWindow.Close();
             _taskbarIcon.IsEnabled = false;
             _taskbarIcon.Dispose();
+            Log.Information("Application exited");
         }
         finally
         {
             _mutex.Dispose();
             _activateEvent.Dispose();
+            Log.CloseAndFlush();
         }
     }
     #endregion
@@ -227,6 +251,7 @@ public partial class App
         _trayContextMenu = new ContextMenu();
         _trayContextMenu.Style = (Style)Current.Resources["TrayContextMenuStyle"];
         var menuSettings = CreateMenuItem(Localization.LocalizationManager.Instance["TrayMenuSettings"], ShowWithActivate, SymbolRegular.Settings24);
+
         var menuSystemSoundSettings = CreateMenuItem(Localization.LocalizationManager.Instance["TrayMenuSystemSound"], OpenSystemSoundSettings, SymbolRegular.Speaker224);
 
         var menuExit = CreateMenuItem(Localization.LocalizationManager.Instance["TrayMenuExit"], () => Current.Shutdown(), SymbolRegular.ArrowExit20);
