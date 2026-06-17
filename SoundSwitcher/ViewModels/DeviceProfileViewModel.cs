@@ -3,6 +3,7 @@ using SoundSwitcher.Services;
 using System.Windows.Input;
 using System.Windows.Media;
 using Microsoft.Win32;
+using SoundSwitcher.Helpers;
 
 namespace SoundSwitcher.ViewModels;
 
@@ -103,9 +104,9 @@ public class DeviceProfileViewModel : ViewModelBase
         get
         {
             if (string.IsNullOrEmpty(PlaybackDeviceId) && string.IsNullOrEmpty(CaptureDeviceId))
-                return "장치 미설정";
+                return Localization.LocalizationManager.Instance["DeviceNotSet"];
 
-            return "프로파일";
+            return Localization.LocalizationManager.Instance["Profile"];
         }
     }
 
@@ -128,6 +129,10 @@ public class DeviceProfileViewModel : ViewModelBase
     public ICommand ApplyCommand { get; }
 
     public ICommand ToggleDefaultCommand { get; }
+
+    public ICommand OpenOutputDevicePropertiesCommand { get; }
+
+    public ICommand OpenInputDevicePropertiesCommand { get; }
 
     public bool IsDeleting
     {
@@ -153,8 +158,8 @@ public class DeviceProfileViewModel : ViewModelBase
         set => SetProperty(ref field, value);
     }
 
-    public string ToggleDefaultMenuText => IsDefaultProfile 
-        ? Localization.LocalizationManager.Instance["UnsetDefaultProfile"] 
+    public string ToggleDefaultMenuText => IsDefaultProfile
+        ? Localization.LocalizationManager.Instance["UnsetDefaultProfile"]
         : Localization.LocalizationManager.Instance["SetDefaultProfile"];
 
     public Wpf.Ui.Controls.SymbolRegular ToggleDefaultIcon => IsDefaultProfile
@@ -213,8 +218,8 @@ public class DeviceProfileViewModel : ViewModelBase
         {
             var dialog = new OpenFileDialog
             {
-                Title = "프로파일 아이콘 선택",
-                Filter = "이미지 파일|*.ico;*.png;*.jpg;*.jpeg"
+                Title = Localization.LocalizationManager.Instance["SelectProfileIcon"],
+                Filter = Localization.LocalizationManager.Instance["ImageFilesFilter"]
             };
 
             if (dialog.ShowDialog() == true)
@@ -250,5 +255,47 @@ public class DeviceProfileViewModel : ViewModelBase
         {
             DeviceApplyRequested?.Invoke(this);
         });
+
+        OpenOutputDevicePropertiesCommand = new RelayCommand(async void () =>
+        {
+            try
+            {
+                if (!string.IsNullOrEmpty(PlaybackDeviceId))
+                {
+                    if (!SoundControlPanelHelper.OpenDeviceProperties(PlaybackDeviceId))
+                    {
+                        await DialogHelper.ShowDialogAsync(
+                            Localization.LocalizationManager.Instance["PropertiesWindowAlreadyOpenTitle"],
+                            Localization.LocalizationManager.Instance["PropertiesWindowAlreadyOpenMessage"],
+                            System.Windows.MessageBoxImage.Warning);
+                    }
+                }
+            }
+            catch (Exception)
+            {
+                // ignored
+            }
+        }, () => !string.IsNullOrEmpty(PlaybackDeviceId));
+
+        OpenInputDevicePropertiesCommand = new RelayCommand(async void () =>
+        {
+            try
+            {
+                if (!string.IsNullOrEmpty(CaptureDeviceId))
+                {
+                    if (!SoundControlPanelHelper.OpenDeviceProperties(CaptureDeviceId))
+                    {
+                        await DialogHelper.ShowDialogAsync(
+                            Localization.LocalizationManager.Instance["PropertiesWindowAlreadyOpenTitle"],
+                            Localization.LocalizationManager.Instance["PropertiesWindowAlreadyOpenMessage"],
+                            System.Windows.MessageBoxImage.Warning);
+                    }
+                }
+            }
+            catch (Exception)
+            {
+                // ignored
+            }
+        }, () => !string.IsNullOrEmpty(CaptureDeviceId));
     }
 }

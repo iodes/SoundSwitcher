@@ -20,19 +20,29 @@
                 <Setter Property="Template">
                     <Setter.Value>
                         <ControlTemplate TargetType="ContextMenu">
-                            <Border
-                                Name="Border"
-                                Padding="0,3,0,3"
-                                Background="{TemplateBinding Background}"
-                                BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="1"
-                                CornerRadius="8">
-                                <StackPanel
-                                    ClipToBounds="True"
-                                    IsItemsHost="True"
-                                    KeyboardNavigation.DirectionalNavigation="Cycle"
-                                    Orientation="Vertical" />
-                            </Border>
+                            <Grid Background="Transparent">
+                                <Border
+                                    Name="Border"
+                                    Margin="8"
+                                    Padding="0,3,0,3"
+                                    Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="1"
+                                    CornerRadius="8">
+                                    <Border.Effect>
+                                        <DropShadowEffect
+                                            BlurRadius="8"
+                                            Direction="270"
+                                            Opacity="0.4"
+                                            ShadowDepth="2" />
+                                    </Border.Effect>
+                                    <StackPanel
+                                        ClipToBounds="True"
+                                        IsItemsHost="True"
+                                        KeyboardNavigation.DirectionalNavigation="Cycle"
+                                        Orientation="Vertical" />
+                                </Border>
+                            </Grid>
                             <ControlTemplate.Triggers>
                                 <Trigger Property="Popup.IsOpen" Value="True">
                                     <Trigger.EnterActions>

@@ -4,6 +4,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:loc="clr-namespace:SoundSwitcher.Localization"
     d:DesignHeight="100"
     d:DesignWidth="300"
     Background="Transparent"
@@ -36,7 +37,7 @@
                 Margin="0,0,0,6"
                 FontSize="14"
                 FontWeight="SemiBold"
-                Text="장치 전환됨" />
+                Text="{Binding Source={x:Static loc:LocalizationManager.Instance}, Path=[DeviceSwitched]}" />
             <TextBlock
                 x:Name="MessageText"
                 FontSize="12"

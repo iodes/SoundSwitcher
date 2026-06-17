@@ -47,6 +47,7 @@
                                         <ui:SymbolIcon Symbol="{Binding ToggleDefaultIcon}" />
                                     </MenuItem.Icon>
                                 </MenuItem>
+                                <Separator />
                                 <MenuItem Command="{Binding ChangeIconCommand}" Header="{Binding Source={x:Static loc:LocalizationManager.Instance}, Path=[ChangeIcon]}">
                                     <MenuItem.Icon>
                                         <ui:SymbolIcon Symbol="Image24" />
@@ -60,6 +61,22 @@
                                         <ui:SymbolIcon Symbol="ArrowCounterclockwise24" />
                                     </MenuItem.Icon>
                                 </MenuItem>
+                                <Separator />
+                                <MenuItem
+                                    Command="{Binding OpenOutputDevicePropertiesCommand}"
+                                    Header="{Binding Source={x:Static loc:LocalizationManager.Instance}, Path=[OutputDeviceProperties]}">
+                                    <MenuItem.Icon>
+                                        <ui:SymbolIcon Symbol="Speaker224" />
+                                    </MenuItem.Icon>
+                                </MenuItem>
+                                <MenuItem
+                                    Command="{Binding OpenInputDevicePropertiesCommand}"
+                                    Header="{Binding Source={x:Static loc:LocalizationManager.Instance}, Path=[InputDeviceProperties]}">
+                                    <MenuItem.Icon>
+                                        <ui:SymbolIcon Symbol="Mic24" />
+                                    </MenuItem.Icon>
+                                </MenuItem>
+                                <Separator />
                                 <MenuItem Command="{Binding DeleteCommand}" Header="{Binding Source={x:Static loc:LocalizationManager.Instance}, Path=[Delete]}">
                                     <MenuItem.Icon>
                                         <ui:SymbolIcon Symbol="Delete24" />

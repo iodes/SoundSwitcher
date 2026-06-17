@@ -33,7 +33,7 @@ public class AudioDeviceService : IMMNotificationClient
         var defaultPlaybackComm = GetDefaultCommunicationDevice(DataFlow.Render);
         var iconPropertyKey = new PropertyKey(new Guid("259abffc-50a7-47ce-af08-68c9a7d73366"), 12);
 
-        var allStates = DeviceState.Active | DeviceState.Unplugged | DeviceState.Disabled;
+        const DeviceState allStates = DeviceState.Active | DeviceState.Unplugged | DeviceState.Disabled;
 
         foreach (var device in _enumerator.EnumerateAudioEndPoints(DataFlow.Render, allStates))
         {

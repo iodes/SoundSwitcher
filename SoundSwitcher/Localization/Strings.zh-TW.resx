@@ -1,2 +1,33 @@
 <?xml version='1.0' encoding='utf-8'?>
-<root><xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata" id="root" xmlns=""><xsd:element msdata:IsDataSet="true" name="root"><xsd:complexType><xsd:choice maxOccurs="unbounded"><xsd:element name="data"><xsd:complexType><xsd:sequence><xsd:element msdata:Ordinal="1" name="value" type="xsd:string" minOccurs="0" /></xsd:sequence><xsd:attribute name="name" type="xsd:string" /></xsd:complexType></xsd:element></xsd:choice></xsd:complexType></xsd:element></xsd:schema><resheader name="resmimetype"><value>text/microsoft-resx</value></resheader><resheader name="version"><value>2.0</value></resheader><resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms</value></resheader><resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms</value></resheader><data name="NavDevices"><value>裝置</value></data><data name="NavSettings"><value>設定</value></data><data name="NavAbout"><value>關於</value></data><data name="ProgramVersion"><value>程式版本</value></data><data name="CheckUpdate"><value>檢查更新</value></data><data name="CheckUpdateDesc"><value>檢查並安裝最新版本的程式更新。</value></data><data name="Homepage"><value>官方首頁</value></data><data name="HomepageDesc"><value>前往官方首頁。</value></data><data name="AutoStartup"><value>開機自動啟動</value></data><data name="AutoStartupDesc"><value>在 Windows 啟動時自動執行程式。</value></data><data name="SwitchCommunicationDevice"><value>切換預設通訊裝置</value></data><data name="SwitchCommunicationDeviceDesc"><value>切換設定檔時，同時更改預設的通訊裝置。</value></data><data name="ShowProfileIconInTray"><value>在系統匣中顯示設定檔圖示</value></data><data name="ShowProfileIconInTrayDesc"><value>在系統匣中顯示目前啟用的設定檔圖示。</value></data><data name="ShowProfileChangeNotification"><value>顯示設定檔變更通知</value></data><data name="ShowProfileChangeNotificationDesc"><value>切換設定檔時在螢幕上顯示通知。</value></data><data name="ChangeIcon"><value>變更圖示</value></data><data name="ResetIcon"><value>重設圖示設定</value></data><data name="Delete"><value>刪除</value></data><data name="Output"><value>輸出</value></data><data name="Input"><value>輸入</value></data><data name="AddProfile"><value>新增設定檔</value></data><data name="TrayMenuSettings"><value>程式設定</value></data><data name="TrayMenuSystemSound"><value>系統音效設定</value></data><data name="TrayMenuExit"><value>結束</value></data><data name="TrayNoDevice"><value>沒有裝置</value></data><data name="Language"><value>語言</value></data><data name="LanguageDesc"><value>選擇顯示語言。</value></data><data name="LanguageAuto"><value>系統預設</value></data><data name="SetDefaultProfile"><value>設定預設配置</value></data><data name="UnsetDefaultProfile"><value>取消預設配置</value></data></root>
+<root><xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata" id="root" xmlns=""><xsd:element msdata:IsDataSet="true" name="root"><xsd:complexType><xsd:choice maxOccurs="unbounded"><xsd:element name="data"><xsd:complexType><xsd:sequence><xsd:element msdata:Ordinal="1" name="value" type="xsd:string" minOccurs="0" /></xsd:sequence><xsd:attribute name="name" type="xsd:string" /></xsd:complexType></xsd:element></xsd:choice></xsd:complexType></xsd:element></xsd:schema><resheader name="resmimetype"><value>text/microsoft-resx</value></resheader><resheader name="version"><value>2.0</value></resheader><resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms</value></resheader><resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms</value></resheader><data name="NavDevices"><value>裝置</value></data><data name="NavSettings"><value>設定</value></data><data name="NavAbout"><value>關於</value></data><data name="ProgramVersion"><value>程式版本</value></data><data name="CheckUpdate"><value>檢查更新</value></data><data name="CheckUpdateDesc"><value>檢查並安裝最新版本的程式更新。</value></data><data name="Homepage"><value>官方首頁</value></data><data name="HomepageDesc"><value>前往官方首頁。</value></data><data name="AutoStartup"><value>開機自動啟動</value></data><data name="AutoStartupDesc"><value>在 Windows 啟動時自動執行程式。</value></data><data name="SwitchCommunicationDevice"><value>切換預設通訊裝置</value></data><data name="SwitchCommunicationDeviceDesc"><value>切換設定檔時，同時更改預設的通訊裝置。</value></data><data name="ShowProfileIconInTray"><value>在系統匣中顯示設定檔圖示</value></data><data name="ShowProfileIconInTrayDesc"><value>在系統匣中顯示目前啟用的設定檔圖示。</value></data><data name="ShowProfileChangeNotification"><value>顯示設定檔變更通知</value></data><data name="ShowProfileChangeNotificationDesc"><value>切換設定檔時在螢幕上顯示通知。</value></data><data name="ChangeIcon"><value>變更圖示</value></data><data name="ResetIcon"><value>重設圖示設定</value></data><data name="Delete"><value>刪除</value></data><data name="Output"><value>輸出</value></data><data name="Input"><value>輸入</value></data><data name="AddProfile"><value>新增設定檔</value></data><data name="TrayMenuSettings"><value>程式設定</value></data><data name="TrayMenuSystemSound"><value>系統音效設定</value></data><data name="TrayMenuExit"><value>結束</value></data><data name="TrayNoDevice"><value>沒有裝置</value></data><data name="Language"><value>語言</value></data><data name="LanguageDesc"><value>選擇顯示語言。</value></data><data name="LanguageAuto"><value>系統預設</value></data><data name="SetDefaultProfile"><value>設定預設配置</value></data><data name="UnsetDefaultProfile"><value>取消預設配置</value></data>  <data name="OutputDeviceProperties" xml:space="preserve">
+    <value>輸出裝置內容</value>
+  </data>
+  <data name="InputDeviceProperties" xml:space="preserve">
+    <value>輸入裝置內容</value>
+  </data>
+  <data name="PropertiesWindowAlreadyOpenTitle" xml:space="preserve">
+    <value>提示</value>
+  </data>
+  <data name="PropertiesWindowAlreadyOpenMessage" xml:space="preserve">
+    <value>音訊裝置內容視窗已開啟。
+請在開啟其他裝置內容之前將其關閉。</value>
+  </data>
+  <data name="OKButton" xml:space="preserve">
+    <value>確定</value>
+  </data>
+  <data name="DeviceNotSet" xml:space="preserve">
+    <value>裝置未設定</value>
+  </data>
+  <data name="Profile" xml:space="preserve">
+    <value>設定檔</value>
+  </data>
+  <data name="SelectProfileIcon" xml:space="preserve">
+    <value>選擇設定檔圖示</value>
+  </data>
+  <data name="ImageFilesFilter" xml:space="preserve">
+    <value>影像檔案|*.ico;*.png;*.jpg;*.jpeg</value>
+  </data>
+  <data name="DeviceSwitched" xml:space="preserve">
+    <value>裝置已切換</value>
+  </data>
+</root>

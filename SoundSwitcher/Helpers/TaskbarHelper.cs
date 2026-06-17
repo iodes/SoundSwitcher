@@ -1,4 +1,3 @@
-using System;
 using System.Runtime.InteropServices;
 using System.Windows;
 
@@ -42,8 +41,10 @@ public static partial class TaskbarHelper
 
     public static TaskbarPosition GetTaskbarPosition()
     {
-        APPBARDATA data = new APPBARDATA();
-        data.cbSize = Marshal.SizeOf<APPBARDATA>();
+        var data = new APPBARDATA
+        {
+            cbSize = Marshal.SizeOf<APPBARDATA>()
+        };
 
         IntPtr result = SHAppBarMessage(ABM_GETTASKBARPOS, ref data);
 

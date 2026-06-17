@@ -1,2 +1,33 @@
 <?xml version='1.0' encoding='utf-8'?>
-<root><xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata" id="root" xmlns=""><xsd:element msdata:IsDataSet="true" name="root"><xsd:complexType><xsd:choice maxOccurs="unbounded"><xsd:element name="data"><xsd:complexType><xsd:sequence><xsd:element msdata:Ordinal="1" name="value" type="xsd:string" minOccurs="0" /></xsd:sequence><xsd:attribute name="name" type="xsd:string" /></xsd:complexType></xsd:element></xsd:choice></xsd:complexType></xsd:element></xsd:schema><resheader name="resmimetype"><value>text/microsoft-resx</value></resheader><resheader name="version"><value>2.0</value></resheader><resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms</value></resheader><resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms</value></resheader><data name="NavDevices"><value>장치</value></data><data name="NavSettings"><value>설정</value></data><data name="NavAbout"><value>정보</value></data><data name="ProgramVersion"><value>프로그램 버전</value></data><data name="CheckUpdate"><value>업데이트 확인</value></data><data name="CheckUpdateDesc"><value>프로그램의 최신 업데이트를 확인 및 설치합니다.</value></data><data name="Homepage"><value>홈페이지</value></data><data name="HomepageDesc"><value>프로그램의 공식 홈페이지를 방문합니다.</value></data><data name="AutoStartup"><value>시작 프로그램 등록</value></data><data name="AutoStartupDesc"><value>Windows 시작 시 프로그램이 자동으로 시작됩니다.</value></data><data name="SwitchCommunicationDevice"><value>기본 통신 장치 전환</value></data><data name="SwitchCommunicationDeviceDesc"><value>프로파일 전환 시 기본 통신 장치도 함께 변경합니다.</value></data><data name="ShowProfileIconInTray"><value>트레이에 프로파일 아이콘 표시</value></data><data name="ShowProfileIconInTrayDesc"><value>활성화된 프로파일의 아이콘을 트레이에 표시합니다.</value></data><data name="ShowProfileChangeNotification"><value>프로파일 변경 알림 표시</value></data><data name="ShowProfileChangeNotificationDesc"><value>프로파일이 전환될 때 화면에 알림을 표시합니다.</value></data><data name="ChangeIcon"><value>아이콘 변경</value></data><data name="ResetIcon"><value>아이콘 설정 초기화</value></data><data name="Delete"><value>삭제</value></data><data name="Output"><value>출력</value></data><data name="Input"><value>입력</value></data><data name="AddProfile"><value>프로파일 추가</value></data><data name="TrayMenuSettings"><value>프로그램 설정</value></data><data name="TrayMenuSystemSound"><value>시스템 소리 설정</value></data><data name="TrayMenuExit"><value>종료</value></data><data name="TrayNoDevice"><value>장치 없음</value></data><data name="Language"><value>언어</value></data><data name="LanguageDesc"><value>프로그램의 표시 언어를 설정합니다.</value></data><data name="LanguageAuto"><value>시스템 기본값</value></data><data name="SetDefaultProfile"><value>기본 프로파일 설정</value></data><data name="UnsetDefaultProfile"><value>기본 프로파일 해제</value></data></root>
+<root><xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata" id="root" xmlns=""><xsd:element msdata:IsDataSet="true" name="root"><xsd:complexType><xsd:choice maxOccurs="unbounded"><xsd:element name="data"><xsd:complexType><xsd:sequence><xsd:element msdata:Ordinal="1" name="value" type="xsd:string" minOccurs="0" /></xsd:sequence><xsd:attribute name="name" type="xsd:string" /></xsd:complexType></xsd:element></xsd:choice></xsd:complexType></xsd:element></xsd:schema><resheader name="resmimetype"><value>text/microsoft-resx</value></resheader><resheader name="version"><value>2.0</value></resheader><resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms</value></resheader><resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms</value></resheader><data name="NavDevices"><value>장치</value></data><data name="NavSettings"><value>설정</value></data><data name="NavAbout"><value>정보</value></data><data name="ProgramVersion"><value>프로그램 버전</value></data><data name="CheckUpdate"><value>업데이트 확인</value></data><data name="CheckUpdateDesc"><value>프로그램의 최신 업데이트를 확인 및 설치합니다.</value></data><data name="Homepage"><value>홈페이지</value></data><data name="HomepageDesc"><value>프로그램의 공식 홈페이지를 방문합니다.</value></data><data name="AutoStartup"><value>시작 프로그램 등록</value></data><data name="AutoStartupDesc"><value>Windows 시작 시 프로그램이 자동으로 시작됩니다.</value></data><data name="SwitchCommunicationDevice"><value>기본 통신 장치 전환</value></data><data name="SwitchCommunicationDeviceDesc"><value>프로파일 전환 시 기본 통신 장치도 함께 변경합니다.</value></data><data name="ShowProfileIconInTray"><value>트레이에 프로파일 아이콘 표시</value></data><data name="ShowProfileIconInTrayDesc"><value>활성화된 프로파일의 아이콘을 트레이에 표시합니다.</value></data><data name="ShowProfileChangeNotification"><value>프로파일 변경 알림 표시</value></data><data name="ShowProfileChangeNotificationDesc"><value>프로파일이 전환될 때 화면에 알림을 표시합니다.</value></data><data name="ChangeIcon"><value>아이콘 변경</value></data><data name="ResetIcon"><value>아이콘 설정 초기화</value></data><data name="Delete"><value>삭제</value></data><data name="Output"><value>출력</value></data><data name="Input"><value>입력</value></data><data name="AddProfile"><value>프로파일 추가</value></data><data name="TrayMenuSettings"><value>프로그램 설정</value></data><data name="TrayMenuSystemSound"><value>시스템 소리 설정</value></data><data name="TrayMenuExit"><value>종료</value></data><data name="TrayNoDevice"><value>장치 없음</value></data><data name="Language"><value>언어</value></data><data name="LanguageDesc"><value>프로그램의 표시 언어를 설정합니다.</value></data><data name="LanguageAuto"><value>시스템 기본값</value></data><data name="SetDefaultProfile"><value>기본 프로파일 설정</value></data><data name="UnsetDefaultProfile"><value>기본 프로파일 해제</value></data>  <data name="OutputDeviceProperties" xml:space="preserve">
+    <value>출력 장치 속성</value>
+  </data>
+  <data name="InputDeviceProperties" xml:space="preserve">
+    <value>입력 장치 속성</value>
+  </data>
+  <data name="PropertiesWindowAlreadyOpenTitle" xml:space="preserve">
+    <value>알림</value>
+  </data>
+  <data name="PropertiesWindowAlreadyOpenMessage" xml:space="preserve">
+    <value>이미 오디오 장치 속성 창이 열려 있습니다.
+기존 창을 닫은 후 다시 시도해 주세요.</value>
+  </data>
+  <data name="OKButton" xml:space="preserve">
+    <value>확인</value>
+  </data>
+  <data name="DeviceNotSet" xml:space="preserve">
+    <value>장치 미설정</value>
+  </data>
+  <data name="Profile" xml:space="preserve">
+    <value>프로파일</value>
+  </data>
+  <data name="SelectProfileIcon" xml:space="preserve">
+    <value>프로파일 아이콘 선택</value>
+  </data>
+  <data name="ImageFilesFilter" xml:space="preserve">
+    <value>이미지 파일|*.ico;*.png;*.jpg;*.jpeg</value>
+  </data>
+  <data name="DeviceSwitched" xml:space="preserve">
+    <value>장치 전환됨</value>
+  </data>
+</root>

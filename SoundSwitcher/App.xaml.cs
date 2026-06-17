@@ -152,10 +152,14 @@ public partial class App
 
         InitializeUserInterface();
 
+#if DEBUG
+        ShowWithActivate();
+#else
         if (Environment.GetCommandLineArgs().Contains("/Activate", StringComparer.OrdinalIgnoreCase))
         {
             ShowWithActivate();
         }
+#endif
     }
 
     private void App_OnExit(object sender, ExitEventArgs e)
