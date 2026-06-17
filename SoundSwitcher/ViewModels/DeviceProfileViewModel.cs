@@ -30,7 +30,7 @@ public class DeviceProfileViewModel : ViewModelBase
                 _profile.PlaybackDeviceId = value;
                 OnPropertyChanged(nameof(DisplayName));
 
-                if (IsActive)
+                if (IsActive || IsPending)
                     DeviceApplyRequested?.Invoke(this);
 
                 ProfileChanged?.Invoke();
@@ -48,7 +48,7 @@ public class DeviceProfileViewModel : ViewModelBase
 
             if (SetProperty(ref _captureDeviceId, value))
             {
-                bool wasActive = IsActive;
+                bool wasActive = IsActive || IsPending;
                 _profile.CaptureDeviceId = value;
                 OnPropertyChanged(nameof(DisplayName));
 

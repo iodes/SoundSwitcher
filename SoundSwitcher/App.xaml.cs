@@ -155,8 +155,9 @@ public partial class App
             Dispatcher.Invoke(UpdateTrayIcon);
         };
 
-        // Apply default profile at startup if needed
+        // Initialize startup state (Default Profile vs Restoring Last Session)
         var startupSettings = SettingsService.Load();
+        bool defaultProfileApplied = false;
 
         if (startupSettings.DefaultProfileId.HasValue)
         {
@@ -170,7 +171,14 @@ public partial class App
                 {
                     SwitchingService.SwitchToProfile(defaultProfile);
                 }
+
+                defaultProfileApplied = true;
             }
+        }
+
+        if (!defaultProfileApplied)
+        {
+            SwitchingService.RestoreStartupState();
         }
 
         InitializeUserInterface();
@@ -327,6 +335,9 @@ public partial class App
 
     private void ShowProfileNotification(Models.DeviceProfile profile)
     {
+        if (_taskbarIcon == null)
+            return;
+
         var settings = SettingsService.Load();
 
         if (!settings.ShowProfileChangeNotification)
@@ -377,6 +388,9 @@ public partial class App
 
     private void UpdateTrayIcon()
     {
+        if (_taskbarIcon == null)
+            return;
+
         var activeProfile = SwitchingService.GetCurrentActiveProfile();
 
         if (activeProfile == null && SwitchingService.PendingProfileId == null)

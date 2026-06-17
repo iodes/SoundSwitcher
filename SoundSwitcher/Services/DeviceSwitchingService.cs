@@ -11,8 +11,20 @@ public class DeviceSwitchingService
     private readonly AudioDeviceService _audioService;
     private readonly SettingsService _settingsService;
     private bool _isSwitching;
+    private Guid? _pendingProfileId;
+    private readonly System.Threading.Lock _stateLock = new();
 
-    public Guid? PendingProfileId { get; private set; }
+    public Guid? PendingProfileId
+    {
+        get
+        {
+            lock (_stateLock) return _pendingProfileId;
+        }
+        private set
+        {
+            lock (_stateLock) _pendingProfileId = value;
+        }
+    }
 
     public event Action<DeviceProfile>? ProfileSwitched;
 
@@ -23,37 +35,68 @@ public class DeviceSwitchingService
         _audioService = audioService;
         _settingsService = settingsService;
         _audioService.DevicesChanged += OnDevicesChanged;
+    }
 
-        // Restore pending state or clear inactive profile on startup
+    /// <summary>
+    /// Restores the pending state or clears inactive profile on startup.
+    /// To be called if no Default Profile overrides it.
+    /// </summary>
+    public void RestoreStartupState()
+    {
         CheckAndRestoreLastSelectedProfile(isStartup: true);
+    }
+
+    /// <summary>
+    /// Clears the pending state if the given profile is currently pending.
+    /// </summary>
+    public void ClearPendingProfile(Guid profileId)
+    {
+        bool raisePendingChanged = false;
+        lock (_stateLock)
+        {
+            if (_pendingProfileId == profileId)
+            {
+                _pendingProfileId = null;
+                raisePendingChanged = true;
+            }
+        }
+
+        if (raisePendingChanged)
+            PendingProfileChanged?.Invoke();
     }
 
     private void OnDevicesChanged()
     {
-        if (_isSwitching)
-            return;
+        DeviceProfile? profileToResume = null;
+        bool raisePendingChanged = false;
 
-        var settings = _settingsService.Load();
-
-        if (PendingProfileId != null)
+        lock (_stateLock)
         {
-            var pendingProfile = settings.DeviceProfiles.FirstOrDefault(p => p.Id == PendingProfileId);
+            if (_isSwitching)
+                return;
 
-            if (pendingProfile != null && IsProfileFullyActive(pendingProfile))
+            var settings = _settingsService.Load();
+
+            if (_pendingProfileId != null)
             {
-                // The pending profile is now fully available. Apply it!
-                var details = GetProfileDeviceDetails(pendingProfile);
+                var pendingProfile = settings.DeviceProfiles.FirstOrDefault(p => p.Id == _pendingProfileId);
 
-                Log.Information("Resuming profile {ProfileId} (Devices became active) -> Playback: {PlaybackName} [{@PlaybackId}] {PlaybackStatus}, Capture: {CaptureName} [{@CaptureId}] {CaptureStatus}",
-                    pendingProfile.Id, details.PlaybackName, pendingProfile.PlaybackDeviceId, details.PlaybackStatus, details.CaptureName, pendingProfile.CaptureDeviceId, details.CaptureStatus);
+                if (pendingProfile != null && IsProfileFullyActive(pendingProfile))
+                {
+                    _pendingProfileId = null;
+                    profileToResume = pendingProfile;
+                    raisePendingChanged = true;
+                }
+            }
+        }
 
-                PendingProfileId = null;
+        if (profileToResume != null)
+        {
+            if (raisePendingChanged)
                 PendingProfileChanged?.Invoke();
 
-                ApplyProfile(pendingProfile, settings.SwitchCommunicationDevice);
-                UpdateLastSelectedProfileId(pendingProfile.Id);
-                ProfileSwitched?.Invoke(pendingProfile);
-            }
+            SwitchToProfile(profileToResume);
+            return;
         }
 
         CheckAndRestoreLastSelectedProfile(isStartup: false);
@@ -61,36 +104,46 @@ public class DeviceSwitchingService
 
     private void CheckAndRestoreLastSelectedProfile(bool isStartup)
     {
-        var settings = _settingsService.Load();
+        bool raisePendingChanged = false;
 
-        if (settings.LastSelectedProfileId != null && PendingProfileId == null)
+        lock (_stateLock)
         {
-            var activeProfile = GetCurrentActiveProfile();
+            var settings = _settingsService.Load();
 
-            if (activeProfile == null)
+            if (settings.LastSelectedProfileId != null && _pendingProfileId == null)
             {
-                var lastProfile = settings.DeviceProfiles.FirstOrDefault(p => p.Id == settings.LastSelectedProfileId);
+                var activeProfile = GetCurrentActiveProfile();
 
-                // If the profile became inactive (e.g. device unplugged), put it into pending state.
-                if (lastProfile != null && !IsProfileFullyActive(lastProfile))
+                if (activeProfile == null)
                 {
-                    var details = GetProfileDeviceDetails(lastProfile);
+                    var lastProfile = settings.DeviceProfiles.FirstOrDefault(p => p.Id == settings.LastSelectedProfileId);
 
-                    string actionVerb = isStartup ? "Restoring pending profile" : "Suspending profile";
-                    string reason = isStartup ? "App startup" : "Device disconnected";
+                    // If the profile became inactive (e.g. device unplugged), put it into pending state.
+                    if (lastProfile != null && !IsProfileFullyActive(lastProfile))
+                    {
+                        var details = GetProfileDeviceDetails(lastProfile);
 
-                    Log.Information("{ActionVerb} {ProfileId} ({Reason}) -> Playback: {PlaybackName} [{@PlaybackId}] {PlaybackStatus}, Capture: {CaptureName} [{@CaptureId}] {CaptureStatus}",
-                        actionVerb, lastProfile.Id, reason, details.PlaybackName, lastProfile.PlaybackDeviceId, details.PlaybackStatus, details.CaptureName, lastProfile.CaptureDeviceId, details.CaptureStatus);
+                        string actionVerb = isStartup ? "Restoring pending profile" : "Suspending profile";
+                        string reason = isStartup ? "App startup" : "Device disconnected";
 
-                    PendingProfileId = lastProfile.Id;
-                    PendingProfileChanged?.Invoke();
-                }
-                else
-                {
-                    // Otherwise (e.g. user manually changed default device via Windows), clear the selected profile.
-                    _settingsService.Update(s => s.LastSelectedProfileId = null);
+                        Log.Information("{ActionVerb} {ProfileId} ({Reason}) -> Playback: {PlaybackName} [{@PlaybackId}] {PlaybackStatus}, Capture: {CaptureName} [{@CaptureId}] {CaptureStatus}",
+                            actionVerb, lastProfile.Id, reason, details.PlaybackName, lastProfile.PlaybackDeviceId, details.PlaybackStatus, details.CaptureName, lastProfile.CaptureDeviceId, details.CaptureStatus);
+
+                        _pendingProfileId = lastProfile.Id;
+                        raisePendingChanged = true;
+                    }
+                    else
+                    {
+                        // Otherwise (e.g. user manually changed default device via Windows), clear the selected profile.
+                        _settingsService.Update(s => s.LastSelectedProfileId = null);
+                    }
                 }
             }
+        }
+
+        if (raisePendingChanged)
+        {
+            PendingProfileChanged?.Invoke();
         }
     }
 
@@ -114,7 +167,13 @@ public class DeviceSwitchingService
         if (profiles.Count == 0)
             return null;
 
-        var currentActiveId = PendingProfileId ?? GetCurrentActiveProfile()?.Id;
+        Guid? currentActiveId;
+
+        lock (_stateLock)
+        {
+            currentActiveId = _pendingProfileId ?? GetCurrentActiveProfile()?.Id;
+        }
+
         int currentIndex = currentActiveId != null ? profiles.FindIndex(p => p.Id == currentActiveId) : -1;
 
         int nextIndex = (currentIndex + 1) % profiles.Count;
@@ -129,37 +188,49 @@ public class DeviceSwitchingService
     /// </summary>
     public void SwitchToProfile(DeviceProfile profile)
     {
-        _isSwitching = true;
+        bool raiseProfileSwitched = false;
+        bool raisePendingChanged = false;
 
-        try
+        lock (_stateLock)
         {
-            var settings = _settingsService.Load();
+            _isSwitching = true;
 
-            if (IsProfileFullyActive(profile))
+            try
             {
-                UpdateLastSelectedProfileId(profile.Id);
-                ApplyProfile(profile, settings.SwitchCommunicationDevice);
+                var settings = _settingsService.Load();
 
-                PendingProfileId = null;
-                PendingProfileChanged?.Invoke();
-                ProfileSwitched?.Invoke(profile);
+                if (IsProfileFullyActive(profile))
+                {
+                    UpdateLastSelectedProfileId(profile.Id);
+                    ApplyProfile(profile, settings.SwitchCommunicationDevice);
+
+                    _pendingProfileId = null;
+                    raisePendingChanged = true;
+                    raiseProfileSwitched = true;
+                }
+                else
+                {
+                    var details = GetProfileDeviceDetails(profile);
+
+                    Log.Information("Pending profile {ProfileId} (Device not found) -> Playback: {PlaybackName} [{@PlaybackId}] {PlaybackStatus}, Capture: {CaptureName} [{@CaptureId}] {CaptureStatus}",
+                        profile.Id, details.PlaybackName, profile.PlaybackDeviceId, details.PlaybackStatus, details.CaptureName, profile.CaptureDeviceId, details.CaptureStatus);
+
+                    UpdateLastSelectedProfileId(profile.Id);
+                    _pendingProfileId = profile.Id;
+                    raisePendingChanged = true;
+                }
             }
-            else
+            finally
             {
-                var details = GetProfileDeviceDetails(profile);
-
-                Log.Information("Pending profile {ProfileId} (Device not found) -> Playback: {PlaybackName} [{@PlaybackId}] {PlaybackStatus}, Capture: {CaptureName} [{@CaptureId}] {CaptureStatus}",
-                    profile.Id, details.PlaybackName, profile.PlaybackDeviceId, details.PlaybackStatus, details.CaptureName, profile.CaptureDeviceId, details.CaptureStatus);
-
-                UpdateLastSelectedProfileId(profile.Id);
-                PendingProfileId = profile.Id;
-                PendingProfileChanged?.Invoke();
+                _isSwitching = false;
             }
         }
-        finally
-        {
-            _isSwitching = false;
-        }
+
+        if (raisePendingChanged)
+            PendingProfileChanged?.Invoke();
+
+        if (raiseProfileSwitched)
+            ProfileSwitched?.Invoke(profile);
     }
 
     private void UpdateLastSelectedProfileId(Guid id)

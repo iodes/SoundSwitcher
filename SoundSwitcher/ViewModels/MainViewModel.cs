@@ -3,6 +3,7 @@ using SoundSwitcher.Models;
 using SoundSwitcher.Services;
 using System.Collections.ObjectModel;
 using System.Reflection;
+using System.Windows;
 using System.Windows.Input;
 
 namespace SoundSwitcher.ViewModels;
@@ -13,8 +14,8 @@ namespace SoundSwitcher.ViewModels;
 public class MainViewModel : ViewModelBase
 {
     private readonly AudioDeviceService _audioService;
-    private readonly SettingsService _settingsService;
     private readonly DeviceSwitchingService _switchingService;
+    private readonly SettingsService _settingsService;
 
     private bool _switchCommunicationDevice;
     private bool _runAtStartup;
@@ -155,12 +156,12 @@ public class MainViewModel : ViewModelBase
         // Auto-refresh when devices change
         _audioService.DevicesChanged += () =>
         {
-            System.Windows.Application.Current.Dispatcher.Invoke(RefreshDevices);
+            Application.Current.Dispatcher.Invoke(RefreshDevices);
         };
 
         _switchingService.PendingProfileChanged += () =>
         {
-            System.Windows.Application.Current.Dispatcher.Invoke(RefreshDevices);
+            Application.Current.Dispatcher.Invoke(RefreshDevices);
         };
     }
 
@@ -317,6 +318,8 @@ public class MainViewModel : ViewModelBase
 
         Profiles.Remove(pvm);
         Log.Information("Deleted profile {ProfileId}", pvm.Id);
+
+        _switchingService.ClearPendingProfile(pvm.Id);
 
         _settingsService.Update(settings =>
         {
