@@ -186,7 +186,7 @@
                                                     SelectedValuePath="DeviceId">
                                                     <ComboBox.ItemTemplate>
                                                         <DataTemplate>
-                                                            <Grid Margin="0,2">
+                                                            <Grid x:Name="DeviceGrid" Margin="0,2">
                                                                 <Grid.ColumnDefinitions>
                                                                     <ColumnDefinition Width="Auto" />
                                                                     <ColumnDefinition Width="*" />
@@ -204,6 +204,11 @@
                                                                     Text="{Binding Name}"
                                                                     TextTrimming="CharacterEllipsis" />
                                                             </Grid>
+                                                            <DataTemplate.Triggers>
+                                                                <DataTrigger Binding="{Binding IsActive}" Value="False">
+                                                                    <Setter TargetName="DeviceGrid" Property="Opacity" Value="0.5" />
+                                                                </DataTrigger>
+                                                            </DataTemplate.Triggers>
                                                         </DataTemplate>
                                                     </ComboBox.ItemTemplate>
                                                 </ComboBox>
@@ -231,7 +236,7 @@
                                                     SelectedValuePath="DeviceId">
                                                     <ComboBox.ItemTemplate>
                                                         <DataTemplate>
-                                                            <Grid Margin="0,2">
+                                                            <Grid x:Name="DeviceGrid" Margin="0,2">
                                                                 <Grid.ColumnDefinitions>
                                                                     <ColumnDefinition Width="Auto" />
                                                                     <ColumnDefinition Width="*" />
@@ -249,6 +254,11 @@
                                                                     Text="{Binding Name}"
                                                                     TextTrimming="CharacterEllipsis" />
                                                             </Grid>
+                                                            <DataTemplate.Triggers>
+                                                                <DataTrigger Binding="{Binding IsActive}" Value="False">
+                                                                    <Setter TargetName="DeviceGrid" Property="Opacity" Value="0.5" />
+                                                                </DataTrigger>
+                                                            </DataTemplate.Triggers>
                                                         </DataTemplate>
                                                     </ComboBox.ItemTemplate>
                                                 </ComboBox>

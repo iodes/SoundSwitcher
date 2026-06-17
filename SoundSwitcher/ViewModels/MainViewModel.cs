@@ -184,8 +184,16 @@ public class MainViewModel : ViewModelBase
     public void RefreshDevices()
     {
         List<AudioDeviceInfo> devices = _audioService.GetActiveDevices();
-        List<AudioDeviceInfo> currentPlayback = devices.Where(d => d.DeviceType == AudioDeviceType.Playback).OrderBy(d => d.Name).ToList();
-        List<AudioDeviceInfo> currentCapture = devices.Where(d => d.DeviceType == AudioDeviceType.Capture).OrderBy(d => d.Name).ToList();
+
+        List<AudioDeviceInfo> currentPlayback = devices.Where(d => d.DeviceType == AudioDeviceType.Playback)
+            .OrderBy(d => ParseDeviceName(d.Name).DeviceDescription)
+            .ThenBy(d => ParseDeviceName(d.Name).EndpointName)
+            .ToList();
+
+        List<AudioDeviceInfo> currentCapture = devices.Where(d => d.DeviceType == AudioDeviceType.Capture)
+            .OrderBy(d => ParseDeviceName(d.Name).DeviceDescription)
+            .ThenBy(d => ParseDeviceName(d.Name).EndpointName)
+            .ToList();
 
         SyncCollection(AvailablePlaybackDevices, currentPlayback);
         SyncCollection(AvailableCaptureDevices, currentCapture);
@@ -199,6 +207,24 @@ public class MainViewModel : ViewModelBase
             var playbackDevice = AvailablePlaybackDevices.FirstOrDefault(d => d.DeviceId == profile.PlaybackDeviceId);
             profile.FallbackDeviceIcon = playbackDevice?.DeviceIcon;
         }
+    }
+
+    private (string EndpointName, string DeviceDescription) ParseDeviceName(string fullName)
+    {
+        if (string.IsNullOrEmpty(fullName))
+            return (string.Empty, string.Empty);
+
+        int lastOpen = fullName.LastIndexOf('(');
+        int lastClose = fullName.LastIndexOf(')');
+
+        if (lastOpen >= 0 && lastClose > lastOpen)
+        {
+            string endpoint = fullName.Substring(0, lastOpen).Trim();
+            string description = fullName.Substring(lastOpen + 1, lastClose - lastOpen - 1).Trim();
+            return (endpoint, description);
+        }
+
+        return (fullName, string.Empty);
     }
 
     private void SyncCollection(ObservableCollection<AudioDeviceInfo> target, List<AudioDeviceInfo> source)
@@ -224,6 +250,13 @@ public class MainViewModel : ViewModelBase
             }
             else
             {
+                // Update properties in case they changed (e.g. IsActive, Name, etc.)
+                existing.Name = item.Name;
+                existing.IsActive = item.IsActive;
+                existing.DeviceIcon = item.DeviceIcon;
+                existing.IsDefault = item.IsDefault;
+                existing.IsDefaultCommunication = item.IsDefaultCommunication;
+
                 int oldIndex = target.IndexOf(existing);
 
                 if (oldIndex != i)

@@ -3,7 +3,6 @@ using NAudio.CoreAudioApi.Interfaces;
 using SoundSwitcher.Models;
 using SoundSwitcher.Helpers;
 using System.Runtime.InteropServices;
-using System.Windows.Media;
 
 namespace SoundSwitcher.Services;
 
@@ -13,7 +12,7 @@ namespace SoundSwitcher.Services;
 public class AudioDeviceService : IMMNotificationClient
 {
     private readonly MMDeviceEnumerator _enumerator;
-    
+
     public event Action? DevicesChanged;
 
     public AudioDeviceService()
@@ -34,7 +33,9 @@ public class AudioDeviceService : IMMNotificationClient
         var defaultPlaybackComm = GetDefaultCommunicationDevice(DataFlow.Render);
         var iconPropertyKey = new PropertyKey(new Guid("259abffc-50a7-47ce-af08-68c9a7d73366"), 12);
 
-        foreach (var device in _enumerator.EnumerateAudioEndPoints(DataFlow.Render, DeviceState.Active))
+        var allStates = DeviceState.Active | DeviceState.Unplugged | DeviceState.Disabled;
+
+        foreach (var device in _enumerator.EnumerateAudioEndPoints(DataFlow.Render, allStates))
         {
             string? iconPath = null;
 
@@ -51,7 +52,8 @@ public class AudioDeviceService : IMMNotificationClient
                 DeviceType = AudioDeviceType.Playback,
                 IsDefault = defaultPlayback != null && device.ID == defaultPlayback.ID,
                 IsDefaultCommunication = defaultPlaybackComm != null && device.ID == defaultPlaybackComm.ID,
-                DeviceIcon = NativeIconHelper.ExtractDeviceIcon(iconPath)
+                DeviceIcon = NativeIconHelper.ExtractDeviceIcon(iconPath),
+                IsActive = device.State == DeviceState.Active
             });
         }
 
@@ -59,7 +61,7 @@ public class AudioDeviceService : IMMNotificationClient
         var defaultCapture = GetDefaultDevice(DataFlow.Capture);
         var defaultCaptureComm = GetDefaultCommunicationDevice(DataFlow.Capture);
 
-        foreach (var device in _enumerator.EnumerateAudioEndPoints(DataFlow.Capture, DeviceState.Active))
+        foreach (var device in _enumerator.EnumerateAudioEndPoints(DataFlow.Capture, allStates))
         {
             string? iconPath = null;
 
@@ -76,7 +78,8 @@ public class AudioDeviceService : IMMNotificationClient
                 DeviceType = AudioDeviceType.Capture,
                 IsDefault = defaultCapture != null && device.ID == defaultCapture.ID,
                 IsDefaultCommunication = defaultCaptureComm != null && device.ID == defaultCaptureComm.ID,
-                DeviceIcon = NativeIconHelper.ExtractDeviceIcon(iconPath)
+                DeviceIcon = NativeIconHelper.ExtractDeviceIcon(iconPath),
+                IsActive = device.State == DeviceState.Active
             });
         }
 
@@ -172,8 +175,14 @@ public class AudioDeviceService : IMMNotificationClient
     }
 
     public void OnDeviceStateChanged(string deviceId, DeviceState newState) => DevicesChanged?.Invoke();
+
     public void OnDeviceAdded(string pwstrDeviceId) => DevicesChanged?.Invoke();
+
     public void OnDeviceRemoved(string deviceId) => DevicesChanged?.Invoke();
+
     public void OnDefaultDeviceChanged(DataFlow flow, Role role, string defaultDeviceId) => DevicesChanged?.Invoke();
-    public void OnPropertyValueChanged(string pwstrDeviceId, PropertyKey key) { }
+
+    public void OnPropertyValueChanged(string pwstrDeviceId, PropertyKey key)
+    {
+    }
 }

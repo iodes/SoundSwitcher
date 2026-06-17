@@ -34,40 +34,61 @@ public class DeviceSwitchingService
         }
     }
 
+    private bool IsProfileValid(DeviceProfile profile)
+    {
+        bool hasDevice = false;
+
+        if (!string.IsNullOrEmpty(profile.PlaybackDeviceId))
+        {
+            hasDevice = true;
+
+            if (!_audioService.IsDeviceActive(profile.PlaybackDeviceId))
+                return false;
+        }
+
+        if (!string.IsNullOrEmpty(profile.CaptureDeviceId))
+        {
+            hasDevice = true;
+
+            if (!_audioService.IsDeviceActive(profile.CaptureDeviceId))
+                return false;
+        }
+
+        return hasDevice;
+    }
+
     /// <summary>
     /// Determines the next profile to switch to and performs the switch.
     /// </summary>
-    /// <returns>The switched profile, or null if no profiles exist.</returns>
+    /// <returns>The switched profile, or null if no profiles exist or none are valid.</returns>
     public DeviceProfile? SwitchToNextProfile()
     {
         var settings = _settingsService.Load();
         List<DeviceProfile> profiles = settings.DeviceProfiles;
 
-        switch (profiles.Count)
-        {
-            case 0:
-                return null;
+        if (profiles.Count == 0)
+            return null;
 
-            case 1:
-                SwitchToProfile(profiles[0]);
-                return profiles[0];
-        }
-
-        // Try to find the current active profile
         var currentActive = GetCurrentActiveProfile();
-        int currentIndex = -1;
+        int currentIndex = currentActive != null ? profiles.FindIndex(p => p.Id == currentActive.Id) : -1;
 
-        if (currentActive != null)
+        int startIndex = (currentIndex + 1) % profiles.Count;
+        int nextIndex = startIndex;
+
+        do
         {
-            currentIndex = profiles.FindIndex(p => p.Id == currentActive.Id);
-        }
+            var nextProfile = profiles[nextIndex];
 
-        int nextIndex = (currentIndex + 1) % profiles.Count;
-        var nextProfile = profiles[nextIndex];
+            if (IsProfileValid(nextProfile))
+            {
+                SwitchToProfile(nextProfile);
+                return nextProfile;
+            }
 
-        SwitchToProfile(nextProfile);
+            nextIndex = (nextIndex + 1) % profiles.Count;
+        } while (nextIndex != startIndex);
 
-        return nextProfile;
+        return null;
     }
 
     /// <summary>
@@ -131,9 +152,7 @@ public class DeviceSwitchingService
             var lastApplied = matchingProfiles.FirstOrDefault(p => p.Id == settings.LastSelectedProfileId);
 
             if (lastApplied != null)
-            {
                 return lastApplied;
-            }
         }
 
         return null;
