@@ -53,7 +53,8 @@ public class AudioDeviceService : IMMNotificationClient
                 IsDefault = defaultPlayback != null && device.ID == defaultPlayback.ID,
                 IsDefaultCommunication = defaultPlaybackComm != null && device.ID == defaultPlaybackComm.ID,
                 DeviceIcon = NativeIconHelper.ExtractDeviceIcon(iconPath),
-                IsActive = device.State == DeviceState.Active
+                IsActive = device.State == DeviceState.Active,
+                State = device.State.ToString()
             });
         }
 
@@ -79,7 +80,8 @@ public class AudioDeviceService : IMMNotificationClient
                 IsDefault = defaultCapture != null && device.ID == defaultCapture.ID,
                 IsDefaultCommunication = defaultCaptureComm != null && device.ID == defaultCaptureComm.ID,
                 DeviceIcon = NativeIconHelper.ExtractDeviceIcon(iconPath),
-                IsActive = device.State == DeviceState.Active
+                IsActive = device.State == DeviceState.Active,
+                State = device.State.ToString()
             });
         }
 

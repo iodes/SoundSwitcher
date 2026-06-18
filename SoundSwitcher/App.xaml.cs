@@ -8,6 +8,8 @@ using SoundSwitcher.Services;
 using SoundSwitcher.ViewModels;
 using SoundSwitcher.Controls;
 using SoundSwitcher.Helpers;
+using SoundSwitcher.Models;
+using System.Linq;
 using MenuItem = Wpf.Ui.Controls.MenuItem;
 using SymbolIcon = Wpf.Ui.Controls.SymbolIcon;
 using SymbolRegular = Wpf.Ui.Controls.SymbolRegular;
@@ -133,6 +135,8 @@ public partial class App
         SettingsService = new SettingsService();
         SwitchingService = new DeviceSwitchingService(AudioService, SettingsService);
 
+        LogAudioDevices();
+
         // Initialise Localization
         Localization.LocalizationManager.Instance.ApplyFromSettings(SettingsService.Load().Language);
 
@@ -215,6 +219,35 @@ public partial class App
             _activateEvent.Dispose();
             Log.CloseAndFlush();
         }
+    }
+
+    private void LogAudioDevices()
+    {
+        Log.Information("--- Audio Devices ---");
+        var activeDevices = AudioService.GetActiveDevices();
+
+        var defaultPlayback = AudioService.GetDefaultDevice(NAudio.CoreAudioApi.DataFlow.Render);
+        var defaultPlaybackComm = AudioService.GetDefaultCommunicationDevice(NAudio.CoreAudioApi.DataFlow.Render);
+        var defaultCapture = AudioService.GetDefaultDevice(NAudio.CoreAudioApi.DataFlow.Capture);
+        var defaultCaptureComm = AudioService.GetDefaultCommunicationDevice(NAudio.CoreAudioApi.DataFlow.Capture);
+
+        Log.Information("Default Playback Device: {0}", defaultPlayback?.FriendlyName ?? "None");
+        Log.Information("Default Communication Playback Device: {0}", defaultPlaybackComm?.FriendlyName ?? "None");
+        Log.Information("Default Capture Device: {0}", defaultCapture?.FriendlyName ?? "None");
+        Log.Information("Default Communication Capture Device: {0}", defaultCaptureComm?.FriendlyName ?? "None");
+
+        Log.Information("Available Playback Devices:");
+        foreach (var device in activeDevices.Where(d => d.DeviceType == AudioDeviceType.Playback))
+        {
+            Log.Information(" - {0} [{1}]", device.Name, device.State);
+        }
+
+        Log.Information("Available Capture Devices:");
+        foreach (var device in activeDevices.Where(d => d.DeviceType == AudioDeviceType.Capture))
+        {
+            Log.Information(" - {0} [{1}]", device.Name, device.State);
+        }
+        Log.Information("-----------------------");
     }
     #endregion
 
