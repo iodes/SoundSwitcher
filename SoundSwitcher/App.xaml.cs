@@ -380,13 +380,13 @@ public partial class App
 
         if (profile.PlaybackDeviceId != null)
         {
-            var pName = AudioService.GetDeviceName(profile.PlaybackDeviceId);
+            var pName = GetDeviceName(profile.PlaybackDeviceId, profile.LastKnownPlaybackDeviceName);
             if (!string.IsNullOrEmpty(pName)) msg += $"🔊 {pName}\n";
         }
 
         if (profile.CaptureDeviceId != null)
         {
-            var cName = AudioService.GetDeviceName(profile.CaptureDeviceId);
+            var cName = GetDeviceName(profile.CaptureDeviceId, profile.LastKnownCaptureDeviceName);
             if (!string.IsNullOrEmpty(cName)) msg += $"🎤 {cName}";
         }
 
@@ -447,7 +447,7 @@ public partial class App
             {
                 if (pendingProfile.PlaybackDeviceId != null)
                 {
-                    var pName = AudioService.GetDeviceName(pendingProfile.PlaybackDeviceId);
+                    var pName = GetDeviceName(pendingProfile.PlaybackDeviceId, pendingProfile.LastKnownPlaybackDeviceName);
 
                     if (!string.IsNullOrEmpty(pName))
                     {
@@ -458,7 +458,7 @@ public partial class App
 
                 if (pendingProfile.CaptureDeviceId != null)
                 {
-                    var cName = AudioService.GetDeviceName(pendingProfile.CaptureDeviceId);
+                    var cName = GetDeviceName(pendingProfile.CaptureDeviceId, pendingProfile.LastKnownCaptureDeviceName);
 
                     if (!string.IsNullOrEmpty(cName))
                     {
@@ -473,13 +473,13 @@ public partial class App
             // Show the currently active profile's devices when not pending
             if (activeProfile.PlaybackDeviceId != null)
             {
-                var pName = AudioService.GetDeviceName(activeProfile.PlaybackDeviceId);
+                var pName = GetDeviceName(activeProfile.PlaybackDeviceId, activeProfile.LastKnownPlaybackDeviceName);
                 if (!string.IsNullOrEmpty(pName)) tooltip += $"\n🔊 {pName}";
             }
 
             if (activeProfile.CaptureDeviceId != null)
             {
-                var cName = AudioService.GetDeviceName(activeProfile.CaptureDeviceId);
+                var cName = GetDeviceName(activeProfile.CaptureDeviceId, activeProfile.LastKnownCaptureDeviceName);
                 if (!string.IsNullOrEmpty(cName)) tooltip += $"\n🎤 {cName}";
             }
         }
@@ -562,6 +562,11 @@ public partial class App
         }
 
         return SystemIcons.Application;
+    }
+
+    private static string? GetDeviceName(string deviceId, string? fallbackName)
+    {
+        return AudioService.GetDeviceName(deviceId) ?? fallbackName;
     }
     #endregion
 

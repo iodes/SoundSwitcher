@@ -11,7 +11,11 @@ public class DeviceProfile
 
     public string? PlaybackDeviceId { get; set; }
 
+    public string? LastKnownPlaybackDeviceName { get; set; }
+
     public string? CaptureDeviceId { get; set; }
+
+    public string? LastKnownCaptureDeviceName { get; set; }
 }
 
 /// <summary>

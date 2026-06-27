@@ -207,17 +207,29 @@ public class MainViewModel : ViewModelBase
     public void RefreshDevices()
     {
         List<AudioDeviceInfo> devices = _audioService.GetActiveDevices();
+        bool deviceSnapshotChanged = RememberSelectedDeviceNames(devices);
 
         var selectedDeviceIds = new HashSet<string>(
             Profiles.Select(p => p.PlaybackDeviceId).Concat(Profiles.Select(p => p.CaptureDeviceId)).OfType<string>()
         );
 
-        List<AudioDeviceInfo> currentPlayback = devices.Where(d => d.DeviceType == AudioDeviceType.Playback && (d.IsActive || ShowUnavailableDevices || selectedDeviceIds.Contains(d.DeviceId)))
+        List<AudioDeviceInfo> currentPlayback = devices
+            .Where(d => d.DeviceType == AudioDeviceType.Playback && (d.IsActive || ShowUnavailableDevices || selectedDeviceIds.Contains(d.DeviceId)))
+            .ToList();
+
+        List<AudioDeviceInfo> currentCapture = devices
+            .Where(d => d.DeviceType == AudioDeviceType.Capture && (d.IsActive || ShowUnavailableDevices || selectedDeviceIds.Contains(d.DeviceId)))
+            .ToList();
+
+        AddMissingSelectedDevices(currentPlayback, AudioDeviceType.Playback);
+        AddMissingSelectedDevices(currentCapture, AudioDeviceType.Capture);
+
+        currentPlayback = currentPlayback
             .OrderBy(d => ParseDeviceName(d.Name).DeviceDescription)
             .ThenBy(d => ParseDeviceName(d.Name).EndpointName)
             .ToList();
 
-        List<AudioDeviceInfo> currentCapture = devices.Where(d => d.DeviceType == AudioDeviceType.Capture && (d.IsActive || ShowUnavailableDevices || selectedDeviceIds.Contains(d.DeviceId)))
+        currentCapture = currentCapture
             .OrderBy(d => ParseDeviceName(d.Name).DeviceDescription)
             .ThenBy(d => ParseDeviceName(d.Name).EndpointName)
             .ToList();
@@ -234,6 +246,70 @@ public class MainViewModel : ViewModelBase
 
             var playbackDevice = AvailablePlaybackDevices.FirstOrDefault(d => d.DeviceId == profile.PlaybackDeviceId);
             profile.FallbackDeviceIcon = playbackDevice?.DeviceIcon;
+        }
+
+        if (deviceSnapshotChanged)
+        {
+            SaveSettings();
+        }
+    }
+
+    private bool RememberSelectedDeviceNames(List<AudioDeviceInfo> devices)
+    {
+        bool changed = false;
+
+        foreach (var profile in Profiles)
+        {
+            var model = profile.GetModel();
+
+            if (!string.IsNullOrEmpty(model.PlaybackDeviceId))
+            {
+                var playbackDevice = devices.FirstOrDefault(d => d.DeviceId == model.PlaybackDeviceId);
+
+                if (playbackDevice != null && !string.IsNullOrWhiteSpace(playbackDevice.Name) && model.LastKnownPlaybackDeviceName != playbackDevice.Name)
+                {
+                    model.LastKnownPlaybackDeviceName = playbackDevice.Name;
+                    changed = true;
+                }
+            }
+
+            if (!string.IsNullOrEmpty(model.CaptureDeviceId))
+            {
+                var captureDevice = devices.FirstOrDefault(d => d.DeviceId == model.CaptureDeviceId);
+
+                if (captureDevice != null && !string.IsNullOrWhiteSpace(captureDevice.Name) && model.LastKnownCaptureDeviceName != captureDevice.Name)
+                {
+                    model.LastKnownCaptureDeviceName = captureDevice.Name;
+                    changed = true;
+                }
+            }
+        }
+
+        return changed;
+    }
+
+    private void AddMissingSelectedDevices(List<AudioDeviceInfo> target, AudioDeviceType deviceType)
+    {
+        foreach (var profile in Profiles)
+        {
+            var model = profile.GetModel();
+            string? deviceId = deviceType == AudioDeviceType.Playback ? model.PlaybackDeviceId : model.CaptureDeviceId;
+
+            if (string.IsNullOrEmpty(deviceId) || target.Any(d => d.DeviceId == deviceId))
+                continue;
+
+            string? lastKnownName = deviceType == AudioDeviceType.Playback
+                ? model.LastKnownPlaybackDeviceName
+                : model.LastKnownCaptureDeviceName;
+
+            target.Add(new AudioDeviceInfo
+            {
+                DeviceId = deviceId,
+                Name = string.IsNullOrWhiteSpace(lastKnownName) ? $"Unknown ({deviceId})" : lastKnownName,
+                DeviceType = deviceType,
+                IsActive = false,
+                State = "Unavailable"
+            });
         }
     }
 
@@ -284,6 +360,7 @@ public class MainViewModel : ViewModelBase
                 existing.DeviceIcon = item.DeviceIcon;
                 existing.IsDefault = item.IsDefault;
                 existing.IsDefaultCommunication = item.IsDefaultCommunication;
+                existing.State = item.State;
 
                 int oldIndex = target.IndexOf(existing);
 

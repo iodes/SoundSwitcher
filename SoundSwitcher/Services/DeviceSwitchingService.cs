@@ -295,10 +295,10 @@ public class DeviceSwitchingService
 
     private (string PlaybackName, string PlaybackStatus, string CaptureName, string CaptureStatus) GetProfileDeviceDetails(DeviceProfile profile)
     {
-        var playbackName = !string.IsNullOrEmpty(profile.PlaybackDeviceId) ? (_audioService.GetDeviceName(profile.PlaybackDeviceId) ?? "Unknown") : "None";
+        var playbackName = !string.IsNullOrEmpty(profile.PlaybackDeviceId) ? (_audioService.GetDeviceName(profile.PlaybackDeviceId) ?? profile.LastKnownPlaybackDeviceName ?? "Unknown") : "None";
         var playbackStatus = string.IsNullOrEmpty(profile.PlaybackDeviceId) ? "" : (_audioService.IsDeviceActive(profile.PlaybackDeviceId) ? "Active" : "Pending");
 
-        var captureName = !string.IsNullOrEmpty(profile.CaptureDeviceId) ? (_audioService.GetDeviceName(profile.CaptureDeviceId) ?? "Unknown") : "None";
+        var captureName = !string.IsNullOrEmpty(profile.CaptureDeviceId) ? (_audioService.GetDeviceName(profile.CaptureDeviceId) ?? profile.LastKnownCaptureDeviceName ?? "Unknown") : "None";
         var captureStatus = string.IsNullOrEmpty(profile.CaptureDeviceId) ? "" : (_audioService.IsDeviceActive(profile.CaptureDeviceId) ? "Active" : "Pending");
 
         return (playbackName, playbackStatus, captureName, captureStatus);
